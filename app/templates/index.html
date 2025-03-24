@@ -15,19 +15,53 @@
             overflow-x: auto;
         }
         [v-cloak] { display: none; }
+        
+        /* 自定义滚动条样式 */
+        .custom-scrollbar {
+            scrollbar-width: thin;
+            scrollbar-color: rgba(156, 163, 175, 0.3) transparent;
+        }
+        
+        /* Webkit浏览器 (Chrome, Safari) 的滚动条样式 */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 5px;
+            height: 5px;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background-color: rgba(156, 163, 175, 0.3);
+            border-radius: 20px;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background-color: rgba(156, 163, 175, 0.5);
+        }
+        
+        /* 在暗色模式下的滚动条样式 */
+        .dark .custom-scrollbar::-webkit-scrollbar-thumb {
+            background-color: rgba(156, 163, 175, 0.5);
+        }
+        
+        .dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background-color: rgba(156, 163, 175, 0.7);
+        }
     </style>
 </head>
-<body class="bg-gray-50 dark:bg-gray-900">
+<body class="bg-gray-50 dark:bg-gray-900 h-screen overflow-hidden">
     {% raw %}
-    <div id="app" v-cloak class="container mx-auto p-4">
+    <div id="app" v-cloak class="container mx-auto p-4 h-screen flex flex-col">
         <header class="bg-white dark:bg-gray-800 shadow rounded-lg p-4 mb-6">
             <h1 class="text-2xl font-bold text-gray-900 dark:text-white">AI 请求 HOOKER</h1>
             <p class="text-gray-600 dark:text-gray-300">捕获并分析所有 OpenRouter API 请求</p>
         </header>
 
-        <div class="flex flex-col md:flex-row gap-6">
+        <div class="flex flex-col md:flex-row gap-6 flex-grow overflow-hidden">
             <!-- 请求列表 -->
-            <div class="w-full md:w-1/3 bg-white dark:bg-gray-800 shadow rounded-lg p-4">
+            <div class="w-full md:w-1/3 bg-white dark:bg-gray-800 shadow rounded-lg p-4 flex flex-col h-full">
                 <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">请求列表</h2>
                 
                 <div v-if="loading" class="py-4 text-center text-gray-500 dark:text-gray-400">
@@ -38,7 +72,7 @@
                     暂无请求记录
                 </div>
                 
-                <ul v-else class="divide-y divide-gray-200 dark:divide-gray-700">
+                <ul v-else class="divide-y divide-gray-200 dark:divide-gray-700 overflow-y-auto flex-grow custom-scrollbar">
                     <li v-for="req in requests" :key="req.id" 
                         class="py-3 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer rounded"
                         :class="{'bg-blue-50 dark:bg-blue-900': selectedRequest && selectedRequest.id === req.id}"
@@ -62,7 +96,7 @@
                 </ul>
                 
                 <!-- 分页 -->
-                <div v-if="totalPages > 1" class="flex justify-between items-center mt-4">
+                <div v-if="totalPages > 1" class="flex justify-between items-center mt-4 pt-2 border-t border-gray-200 dark:border-gray-700">
                     <button 
                         @click="changePage(currentPage - 1)" 
                         :disabled="currentPage === 1"
@@ -82,7 +116,7 @@
             </div>
             
             <!-- 详情面板 -->
-            <div class="w-full md:w-2/3 bg-white dark:bg-gray-800 shadow rounded-lg p-4">
+            <div class="w-full md:w-2/3 bg-white dark:bg-gray-800 shadow rounded-lg p-4 h-full overflow-y-auto custom-scrollbar">
                 <div v-if="!selectedRequest" class="py-10 text-center text-gray-500 dark:text-gray-400">
                     <p>选择一个请求以查看详情</p>
                 </div>
@@ -105,7 +139,7 @@
                             <button @click="copyToClipboard(JSON.stringify(selectedRequest.headers, null, 2))" 
                                     class="text-xs text-blue-600 dark:text-blue-400">复制</button>
                         </div>
-                        <div class="bg-gray-100 dark:bg-gray-700 p-3 rounded json-viewer max-h-40 overflow-y-auto">
+                        <div class="bg-gray-100 dark:bg-gray-700 p-3 rounded json-viewer max-h-40 overflow-y-auto custom-scrollbar">
                             {{ JSON.stringify(selectedRequest.headers, null, 2) }}
                         </div>
                     </div>
@@ -116,7 +150,7 @@
                             <button @click="copyToClipboard(JSON.stringify(selectedRequest.body, null, 2))" 
                                     class="text-xs text-blue-600 dark:text-blue-400">复制</button>
                         </div>
-                        <div class="bg-gray-100 dark:bg-gray-700 p-3 rounded json-viewer max-h-60 overflow-y-auto">
+                        <div class="bg-gray-100 dark:bg-gray-700 p-3 rounded json-viewer max-h-60 overflow-y-auto custom-scrollbar">
                             {{ JSON.stringify(selectedRequest.body, null, 2) }}
                         </div>
                     </div>
@@ -151,7 +185,7 @@
                                     <button @click="copyToClipboard(JSON.stringify(response.headers, null, 2))" 
                                             class="text-xs text-blue-600 dark:text-blue-400">复制</button>
                                 </div>
-                                <div class="bg-gray-100 dark:bg-gray-700 p-3 rounded json-viewer max-h-40 overflow-y-auto">
+                                <div class="bg-gray-100 dark:bg-gray-700 p-3 rounded json-viewer max-h-40 overflow-y-auto custom-scrollbar">
                                     {{ JSON.stringify(response.headers, null, 2) }}
                                 </div>
                             </div>
@@ -162,7 +196,7 @@
                                     <button @click="copyToClipboard(response.body)" 
                                             class="text-xs text-blue-600 dark:text-blue-400">复制</button>
                                 </div>
-                                <div class="bg-gray-100 dark:bg-gray-700 p-3 rounded json-viewer max-h-96 overflow-y-auto">
+                                <div class="bg-gray-100 dark:bg-gray-700 p-3 rounded json-viewer max-h-96 overflow-y-auto custom-scrollbar">
                                     {{ formatResponseBody(response.body) }}
                                 </div>
                             </div>
@@ -260,12 +294,23 @@
                 onMounted(() => {
                     fetchRequests();
                     
-                    // 每30秒自动刷新请求列表
+                    // 每10秒自动刷新请求列表，无论是否有选中请求
                     setInterval(() => {
-                        if (!selectedRequest.value) {
-                            fetchRequests(currentPage.value);
-                        }
-                    }, 30000);
+                        // 保存当前选中的请求ID
+                        const selectedId = selectedRequest.value ? selectedRequest.value.id : null;
+                        
+                        // 刷新列表
+                        fetchRequests(currentPage.value).then(() => {
+                            // 如果之前有选中的请求，保持其选中状态
+                            if (selectedId) {
+                                // 如果选中的请求还在当前页，无需重新加载详情
+                                const stillExists = requests.value.some(req => req.id === selectedId);
+                                if (!stillExists) {
+                                    // 如果请求不在当前页但仍需保持选中状态，不更改selectedRequest
+                                }
+                            }
+                        });
+                    }, 10000);
                 });
                 
                 return {
