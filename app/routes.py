@@ -9,10 +9,36 @@ from app.models import Request as RequestModel, Response as ResponseModel
 # 前端界面路由
 main_bp = Blueprint('main', __name__)
 
+# 全局变量，用于存储API设置
+OPENROUTER_BASE_URL = 'https://openrouter.ai/api/v1'
+API_KEY = None
+DEFAULT_MODEL = None
+
 @main_bp.route('/')
 def index():
     """显示请求列表的主页面"""
     return render_template('index.html')
+
+@main_bp.route('/api/settings', methods=['POST'])
+def save_settings():
+    """保存API设置的端点"""
+    global OPENROUTER_BASE_URL, API_KEY, DEFAULT_MODEL
+    
+    data = request.get_json()
+    if not data:
+        return jsonify({'message': '无效的请求数据'}), 400
+    
+    # 更新全局变量
+    if 'base_url' in data and data['base_url']:
+        OPENROUTER_BASE_URL = data['base_url']
+    
+    if 'api_key' in data:
+        API_KEY = data['api_key']
+    
+    if 'default_model' in data:
+        DEFAULT_MODEL = data['default_model']
+    
+    return jsonify({'message': '设置已保存'})
 
 @main_bp.route('/api/readme')
 def get_readme():
@@ -110,10 +136,10 @@ def delete_all_requests():
 # 代理服务路由
 proxy_bp = Blueprint('proxy', __name__, url_prefix='/api/v1')
 
-OPENROUTER_BASE_URL = 'https://openrouter.ai/api/v1'
-
 def make_proxy_request(method, path, headers, json_data=None):
     """处理普通请求的代理函数"""
+    global API_KEY, DEFAULT_MODEL
+    
     # 创建新的请求记录
     db_request = RequestModel(
         method=method,
@@ -126,7 +152,7 @@ def make_proxy_request(method, path, headers, json_data=None):
     db.session.add(db_request)
     db.session.commit()
     
-    # 转发请求到OpenRouter
+    # 转发请求到配置的API服务
     start_time = time.time()
     url = f"{OPENROUTER_BASE_URL}{path}"
     
@@ -134,7 +160,17 @@ def make_proxy_request(method, path, headers, json_data=None):
     # 移除可能导致问题的头部
     if 'Host' in proxied_headers:
         del proxied_headers['Host']
-        
+    
+    # 如果请求中没有提供API Key，且有全局配置的API Key，则使用全局配置
+    if API_KEY and not any(k.lower() in ['authorization', 'x-api-key'] for k in proxied_headers):
+        proxied_headers['Authorization'] = f'Bearer {API_KEY}'
+    
+    # 如果是POST请求且包含json数据
+    if method == 'POST' and json_data:
+        # 如果请求中没有指定模型且有全局默认模型，则使用全局默认模型
+        if DEFAULT_MODEL and 'model' not in json_data:
+            json_data['model'] = DEFAULT_MODEL
+    
     try:
         if method == 'GET':
             resp = requests.get(url, headers=proxied_headers)
@@ -188,6 +224,8 @@ def make_proxy_request(method, path, headers, json_data=None):
 
 def make_proxy_stream_request(method, path, headers, json_data=None):
     """处理流式请求的代理函数"""
+    global API_KEY, DEFAULT_MODEL
+    
     # 创建新的请求记录
     db_request = RequestModel(
         method=method,
@@ -200,7 +238,7 @@ def make_proxy_stream_request(method, path, headers, json_data=None):
     db.session.add(db_request)
     db.session.commit()
     
-    # 转发请求到OpenRouter
+    # 转发请求到配置的API服务
     start_time = time.time()
     url = f"{OPENROUTER_BASE_URL}{path}"
     
@@ -208,7 +246,15 @@ def make_proxy_stream_request(method, path, headers, json_data=None):
     # 移除可能导致问题的头部
     if 'Host' in proxied_headers:
         del proxied_headers['Host']
-        
+    
+    # 如果请求中没有提供API Key，且有全局配置的API Key，则使用全局配置
+    if API_KEY and not any(k.lower() in ['authorization', 'x-api-key'] for k in proxied_headers):
+        proxied_headers['Authorization'] = f'Bearer {API_KEY}'
+    
+    # 如果请求中没有指定模型且有全局默认模型，则使用全局默认模型
+    if json_data and DEFAULT_MODEL and 'model' not in json_data:
+        json_data['model'] = DEFAULT_MODEL
+    
     try:
         # 使用stream=True发送请求
         resp = requests.post(url, headers=proxied_headers, json=json_data, stream=True)

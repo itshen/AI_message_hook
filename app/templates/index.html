@@ -173,12 +173,159 @@
                 <h1 class="text-2xl font-bold text-gray-900 dark:text-white">AI 请求 HOOKER</h1>
                 <p class="text-gray-600 dark:text-gray-300">捕获并分析所有 OpenRouter API 请求</p>
             </div>
-            <button 
-                @click="showReadme = true" 
-                class="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg shadow">
-                使用说明
-            </button>
+            <div class="flex space-x-4">
+                <!-- Base URL 设置按钮 -->
+                <button 
+                    @click="showSettings = true" 
+                    class="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg shadow">
+                    API 设置
+                </button>
+                <button 
+                    @click="showReadme = true" 
+                    class="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg shadow">
+                    使用说明
+                </button>
+            </div>
         </header>
+
+        <!-- 当前配置显示和快速切换 -->
+        <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-4 mb-6">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center">
+                <div class="mb-3 sm:mb-0">
+                    <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">当前 API 配置</h2>
+                    <div class="text-sm text-gray-700 dark:text-gray-300 flex flex-col md:flex-row md:items-center">
+                        <div class="mr-4 mb-1 md:mb-0"><span class="font-medium">API 服务:</span> {{ getBaseUrlName(selectedBaseUrl === 'custom' ? customBaseUrl : selectedBaseUrl) }}</div>
+                        <div class="mr-4 mb-1 md:mb-0 flex items-center">
+                            <span class="font-medium">API Key:</span> 
+                            <span class="ml-1">{{ apiKey ? (showApiKey ? apiKey : maskApiKey(apiKey)) : '' }}</span>
+                            <button @click="toggleApiKeyVisibility" class="ml-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+                                <svg v-if="showApiKey" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                </svg>
+                                <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"></path>
+                                </svg>
+                            </button>
+                        </div>
+                        <div><span class="font-medium">默认模型:</span> {{ defaultModel || '' }}</div>
+                    </div>
+                </div>
+                
+                <!-- 快速切换按钮 -->
+                <div class="w-full sm:w-auto" v-if="savedConfigs.length > 0">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">快速切换:</label>
+                    <div class="flex flex-wrap gap-2">
+                        <button 
+                            v-for="config in savedConfigs" 
+                            :key="config.url"
+                            @click="quickSwitchConfig(config.url)"
+                            class="px-3 py-1 text-xs rounded-full"
+                            :class="{
+                                'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200': (selectedBaseUrl === config.url) || (selectedBaseUrl === 'custom' && customBaseUrl === config.url),
+                                'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600': !((selectedBaseUrl === config.url) || (selectedBaseUrl === 'custom' && customBaseUrl === config.url))
+                            }">
+                            {{ config.name }}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- API 设置模态框 -->
+        <div v-if="showSettings" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full overflow-hidden flex flex-col">
+                <div class="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+                    <h2 class="text-xl font-bold text-gray-900 dark:text-white">API 设置</h2>
+                    <button @click="showSettings = false" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+                <div class="p-6">
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">选择默认 Base URL</label>
+                        <select 
+                            v-model="selectedBaseUrl" 
+                            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                            @change="handleBaseUrlChange">
+                            <option value="https://openrouter.ai/api/v1">OpenRouter (https://openrouter.ai/api/v1)</option>
+                            <option value="https://api.siliconflow.cn/v1">硅基流动 (https://api.siliconflow.cn/v1)</option>
+                            <option value="https://api.deepseek.com/v1">DeepSeek (https://api.deepseek.com/v1)</option>
+                            <option value="https://api.minimax.chat/v1">MiniMax (https://api.minimax.chat/v1)</option>
+                            <option value="https://open.bigmodel.cn/api/paas/v4">智谱 (https://open.bigmodel.cn/api/paas/v4)</option>
+                            <option value="https://dashscope.aliyuncs.com/compatible-mode/v1">千问 (https://dashscope.aliyuncs.com/compatible-mode/v1)</option>
+                            <option value="https://api.openai.com/v1">OpenAI (https://api.openai.com/v1)</option>
+                            <option value="custom">自定义...</option>
+                        </select>
+                    </div>
+                    
+                    <div v-if="selectedBaseUrl === 'custom'" class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">自定义 Base URL</label>
+                        <input 
+                            type="text" 
+                            v-model="customBaseUrl" 
+                            placeholder="请输入完整的 Base URL" 
+                            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                        />
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">API Key</label>
+                        <div class="relative flex">
+                            <input 
+                                :type="showApiKeyInModal ? 'text' : 'password'"
+                                v-model="apiKey" 
+                                placeholder="请输入您的 API Key" 
+                                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                            />
+                            <button 
+                                type="button"
+                                @click="toggleApiKeyInModalVisibility" 
+                                class="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                            >
+                                <svg v-if="showApiKeyInModal" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                </svg>
+                                <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">默认模型名称</label>
+                        <input 
+                            type="text" 
+                            v-model="defaultModel" 
+                            placeholder="请输入默认模型名称" 
+                            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                        />
+                    </div>
+                    
+                    <div class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                        <p>注：当检测到 API 请求中未包含 Key 或模型名称时，将自动使用此处配置的默认值。</p>
+                        <p class="mt-1">所有设置将保存在您的浏览器本地存储中，不会上传至服务器。</p>
+                    </div>
+                    
+                    <div class="flex justify-end space-x-3">
+                        <button 
+                            @click="showSettings = false" 
+                            class="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg">
+                            取消
+                        </button>
+                        <button 
+                            @click="saveSettings" 
+                            class="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg shadow">
+                            保存设置
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
 
         <!-- README模态框 -->
         <div v-if="showReadme" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -297,6 +444,21 @@
                             <div class="mb-1"><span class="font-medium">时间:</span> {{ formatDate(selectedRequest.timestamp) }}</div>
                             <div class="mb-1"><span class="font-medium">方法:</span> {{ selectedRequest.method }}</div>
                             <div class="mb-1"><span class="font-medium">路径:</span> {{ selectedRequest.path || '/' }}</div>
+                            <div class="mb-1" v-if="getBaseUrlFromRequest(selectedRequest)"><span class="font-medium">API服务:</span> {{ getBaseUrlFromRequest(selectedRequest) }}</div>
+                            <div class="mb-1" v-if="getApiKeyFromRequest(selectedRequest)">
+                                <span class="font-medium">API Key:</span> 
+                                <span>{{ getApiKeyFromRequest(selectedRequest) }}</span>
+                                <button @click="toggleRequestApiKeyVisibility(selectedRequest)" class="ml-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+                                    <svg v-if="selectedRequest.showApiKey" class="w-4 h-4 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                    </svg>
+                                    <svg v-else class="w-4 h-4 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                            <div class="mb-1" v-if="getModelFromRequest(selectedRequest)"><span class="font-medium">模型:</span> {{ getModelFromRequest(selectedRequest) }}</div>
                         </div>
                     </div>
                     
@@ -395,6 +557,213 @@
                 const readmeLoading = ref(false);
                 const readmeError = ref(null);
                 const renderedReadme = ref('');
+                
+                // API 设置相关
+                const showSettings = ref(false);
+                const selectedBaseUrl = ref('https://openrouter.ai/api/v1');
+                const customBaseUrl = ref('');
+                const apiKey = ref('');
+                const defaultModel = ref('');
+                const showApiKey = ref(false);
+                const showApiKeyInModal = ref(false);
+                
+                // 新增加的函数和变量用于快速切换功能
+                const savedConfigs = ref([]);
+                
+                // 加载所有已保存的配置
+                const loadSavedConfigs = () => {
+                    savedConfigs.value = [];
+                    
+                    // 预定义的API服务
+                    const predefinedUrls = [
+                        'https://openrouter.ai/api/v1',
+                        'https://api.siliconflow.cn/v1',
+                        'https://api.deepseek.com/v1',
+                        'https://api.minimax.chat/v1',
+                        'https://open.bigmodel.cn/api/paas/v4',
+                        'https://dashscope.aliyuncs.com/compatible-mode/v1',
+                        'https://api.openai.com/v1'
+                    ];
+                    
+                    // 检查每个预定义URL是否有保存的配置
+                    for (const url of predefinedUrls) {
+                        const configKey = `aiHook_config_${url}`;
+                        const savedConfig = localStorage.getItem(configKey);
+                        
+                        if (savedConfig) {
+                            try {
+                                const config = JSON.parse(savedConfig);
+                                savedConfigs.value.push({
+                                    url: url,
+                                    name: getBaseUrlName(url),
+                                    config: config
+                                });
+                            } catch (e) {
+                                console.error('解析配置失败', e);
+                            }
+                        }
+                    }
+                    
+                    // 检查是否有自定义URL的保存配置
+                    for (let i = 0; i < localStorage.length; i++) {
+                        const key = localStorage.key(i);
+                        if (key && key.startsWith('aiHook_config_')) {
+                            const url = key.replace('aiHook_config_', '');
+                            // 排除已经处理过的预定义URL
+                            if (!predefinedUrls.includes(url)) {
+                                try {
+                                    const savedConfig = localStorage.getItem(key);
+                                    const config = JSON.parse(savedConfig);
+                                    savedConfigs.value.push({
+                                        url: url,
+                                        name: getBaseUrlName(url),
+                                        config: config
+                                    });
+                                } catch (e) {
+                                    console.error('解析配置失败', e);
+                                }
+                            }
+                        }
+                    }
+                };
+                
+                // 保存 API 设置
+                const saveSettings = () => {
+                    // 根据是否选择了自定义来确定最终的 baseUrl
+                    const finalBaseUrl = selectedBaseUrl.value === 'custom' ? customBaseUrl.value : selectedBaseUrl.value;
+                    
+                    // 为当前 BaseURL 创建配置对象
+                    const config = {
+                        api_key: apiKey.value,
+                        default_model: defaultModel.value
+                    };
+                    
+                    // 保存当前选择的 BaseURL
+                    localStorage.setItem('aiHook_currentBaseUrl', finalBaseUrl);
+                    
+                    // 保存 BaseURL 对应的配置
+                    localStorage.setItem(`aiHook_config_${finalBaseUrl}`, JSON.stringify(config));
+                    
+                    // 重新加载已保存的配置列表，用于主界面展示
+                    loadSavedConfigs();
+                    
+                    // 发送设置到服务器
+                    axios.post('/api/settings', {
+                        base_url: finalBaseUrl,
+                        api_key: apiKey.value,
+                        default_model: defaultModel.value
+                    }).then(() => {
+                        // 关闭设置窗口
+                        showSettings.value = false;
+                    }).catch(error => {
+                        console.error('保存设置失败', error);
+                    });
+                };
+                
+                // 快速切换到已保存的配置
+                const quickSwitchConfig = (url) => {
+                    // 更新 BaseURL
+                    const predefinedUrls = [
+                        'https://openrouter.ai/api/v1',
+                        'https://api.siliconflow.cn/v1',
+                        'https://api.deepseek.com/v1',
+                        'https://api.minimax.chat/v1',
+                        'https://open.bigmodel.cn/api/paas/v4',
+                        'https://dashscope.aliyuncs.com/compatible-mode/v1',
+                        'https://api.openai.com/v1'
+                    ];
+                    
+                    if (predefinedUrls.includes(url)) {
+                        selectedBaseUrl.value = url;
+                        customBaseUrl.value = '';
+                    } else {
+                        selectedBaseUrl.value = 'custom';
+                        customBaseUrl.value = url;
+                    }
+                    
+                    // 加载该 URL 对应的配置
+                    const configKey = `aiHook_config_${url}`;
+                    const savedConfig = localStorage.getItem(configKey);
+                    
+                    if (savedConfig) {
+                        try {
+                            const config = JSON.parse(savedConfig);
+                            apiKey.value = config.api_key || '';
+                            defaultModel.value = config.default_model || '';
+                            
+                            // 同时更新服务器配置
+                            axios.post('/api/settings', {
+                                base_url: url,
+                                api_key: config.api_key || '',
+                                default_model: config.default_model || ''
+                            }).catch(error => {
+                                console.error('更新配置失败', error);
+                            });
+                            
+                            // 保存为当前配置
+                            localStorage.setItem('aiHook_currentBaseUrl', url);
+                        } catch (e) {
+                            console.error('解析配置失败', e);
+                        }
+                    }
+                };
+                
+                // 监听设置模态框的可见性，加载已保存配置
+                watch(showSettings, (visible) => {
+                    if (visible) {
+                        loadSavedConfigs();
+                    }
+                });
+                
+                // 处理 BaseURL 选择变化
+                const handleBaseUrlChange = () => {
+                    if (selectedBaseUrl.value !== 'custom') {
+                        customBaseUrl.value = '';
+                        
+                        // 加载该 BaseURL 对应的配置
+                        const configKey = `aiHook_config_${selectedBaseUrl.value}`;
+                        const savedConfig = localStorage.getItem(configKey);
+                        
+                        if (savedConfig) {
+                            try {
+                                const config = JSON.parse(savedConfig);
+                                
+                                // 如果有保存的配置，直接使用
+                                if (config.api_key || config.default_model) {
+                                    apiKey.value = config.api_key || '';
+                                    defaultModel.value = config.default_model || '';
+                                }
+                            } catch (e) {
+                                console.error('解析配置失败', e);
+                            }
+                        } else {
+                            // 如果没有配置，清空输入值
+                            apiKey.value = '';
+                            defaultModel.value = '';
+                        }
+                    }
+                };
+                
+                // 根据 BaseURL 获取名称
+                const getBaseUrlName = (url) => {
+                    const urlMap = {
+                        'https://openrouter.ai/api/v1': 'OpenRouter',
+                        'https://api.siliconflow.cn/v1': '硅基流动',
+                        'https://api.deepseek.com/v1': 'DeepSeek',
+                        'https://api.minimax.chat/v1': 'MiniMax',
+                        'https://open.bigmodel.cn/api/paas/v4': '智谱',
+                        'https://dashscope.aliyuncs.com/compatible-mode/v1': '千问',
+                        'https://api.openai.com/v1': 'OpenAI'
+                    };
+                    return urlMap[url] || '自定义';
+                };
+                
+                // 遮蔽 API Key，只显示最后4位
+                const maskApiKey = (key) => {
+                    if (!key) return '';
+                    if (key.length <= 4) return key;
+                    return '**********' + key.slice(-4);
+                };
                 
                 // 获取请求列表
                 const fetchRequests = async (page = 1, perPage = 10) => {
@@ -500,6 +869,46 @@
                 onMounted(() => {
                     fetchRequests();
                     
+                    // 从 localStorage 加载上次使用的 BaseURL
+                    const savedBaseUrl = localStorage.getItem('aiHook_currentBaseUrl');
+                    
+                    if (savedBaseUrl) {
+                        // 检查是否为预定义选项之一
+                        const predefinedUrls = [
+                            'https://openrouter.ai/api/v1',
+                            'https://api.siliconflow.cn/v1',
+                            'https://api.deepseek.com/v1',
+                            'https://api.minimax.chat/v1',
+                            'https://open.bigmodel.cn/api/paas/v4',
+                            'https://dashscope.aliyuncs.com/compatible-mode/v1',
+                            'https://api.openai.com/v1'
+                        ];
+                        
+                        if (predefinedUrls.includes(savedBaseUrl)) {
+                            selectedBaseUrl.value = savedBaseUrl;
+                        } else {
+                            selectedBaseUrl.value = 'custom';
+                            customBaseUrl.value = savedBaseUrl;
+                        }
+                        
+                        // 加载该 BaseURL 对应的配置
+                        const configKey = `aiHook_config_${savedBaseUrl}`;
+                        const savedConfig = localStorage.getItem(configKey);
+                        
+                        if (savedConfig) {
+                            try {
+                                const config = JSON.parse(savedConfig);
+                                apiKey.value = config.api_key || '';
+                                defaultModel.value = config.default_model || '';
+                            } catch (e) {
+                                console.error('解析配置失败', e);
+                            }
+                        }
+                    }
+                    
+                    // 加载所有已保存的配置，用于主界面展示
+                    loadSavedConfigs();
+                    
                     // 每10秒自动刷新请求列表，无论是否有选中请求
                     setInterval(() => {
                         // 保存当前选中的请求ID
@@ -599,6 +1008,92 @@
                     return html;
                 };
                 
+                // 从请求中获取 BaseURL 名称
+                const getBaseUrlFromRequest = (req) => {
+                    if (!req || !req.headers) return null;
+                    
+                    // 尝试从头信息中找到 BaseURL
+                    const host = req.headers.Host || req.headers.host;
+                    if (host) {
+                        if (host.includes('openrouter.ai')) return 'OpenRouter';
+                        if (host.includes('siliconflow.cn')) return '硅基流动';
+                        if (host.includes('deepseek.com')) return 'DeepSeek';
+                        if (host.includes('minimax.chat')) return 'MiniMax';
+                        if (host.includes('bigmodel.cn')) return '智谱';
+                        if (host.includes('dashscope.aliyuncs.com')) return '千问';
+                        if (host.includes('openai.com')) return 'OpenAI';
+                    }
+                    
+                    // 查找自定义 baseUrl
+                    const origin = req.headers.Origin || req.headers.origin;
+                    if (origin) return origin;
+                    
+                    // 从当前选择的 BaseURL 推断
+                    return getBaseUrlName(selectedBaseUrl.value);
+                };
+                
+                // 从请求中获取遮蔽后的 API Key
+                const getApiKeyFromRequest = (req) => {
+                    if (!req || !req.headers) return null;
+                    
+                    // 尝试从 Authorization 头获取
+                    const auth = req.headers.Authorization || req.headers.authorization;
+                    if (auth && auth.startsWith('Bearer ')) {
+                        return req.showApiKey ? auth.substring(7) : maskApiKey(auth.substring(7));
+                    }
+                    
+                    // 尝试从 x-api-key 获取
+                    const apiKey = req.headers['x-api-key'] || req.headers['X-Api-Key'];
+                    if (apiKey) {
+                        return req.showApiKey ? apiKey : maskApiKey(apiKey);
+                    }
+                    
+                    return null;
+                };
+                
+                // 从请求中获取模型名称
+                const getModelFromRequest = (req) => {
+                    try {
+                        if (!req || !req.body) return null;
+                        
+                        // 请求体可能是对象或字符串形式的 JSON
+                        let body = req.body;
+                        if (typeof body === 'string') {
+                            try {
+                                body = JSON.parse(body);
+                            } catch (e) {
+                                // 无法解析 JSON，可能不是标准格式
+                                return null;
+                            }
+                        }
+                        
+                        // 从请求体中获取模型名称
+                        if (body && body.model) {
+                            return body.model;
+                        }
+                        
+                        return null;
+                    } catch (error) {
+                        console.error('获取模型名称时出错', error);
+                        return null;
+                    }
+                };
+                
+                // 切换 API Key 的可见性
+                const toggleApiKeyVisibility = () => {
+                    showApiKey.value = !showApiKey.value;
+                };
+                
+                // 切换请求的 API Key 可见性
+                const toggleRequestApiKeyVisibility = (req) => {
+                    req.showApiKey = !req.showApiKey;
+                };
+                
+                // 切换模态框中 API Key 的可见性
+                const toggleApiKeyInModalVisibility = () => {
+                    showApiKeyInModal.value = !showApiKeyInModal.value;
+                };
+                
                 return {
                     requests,
                     selectedRequest,
@@ -618,9 +1113,31 @@
                     readmeError,
                     renderedReadme,
                     deleteRequest,
-                    clearAllRequests
+                    clearAllRequests,
+                    // API 设置相关
+                    showSettings,
+                    selectedBaseUrl,
+                    customBaseUrl,
+                    apiKey,
+                    defaultModel,
+                    handleBaseUrlChange,
+                    saveSettings,
+                    savedConfigs,
+                    quickSwitchConfig,
+                    getBaseUrlName,
+                    maskApiKey,
+                    // 请求详情相关
+                    getBaseUrlFromRequest,
+                    getApiKeyFromRequest,
+                    getModelFromRequest,
+                    // 新增加的函数
+                    showApiKey,
+                    toggleApiKeyVisibility,
+                    toggleRequestApiKeyVisibility,
+                    showApiKeyInModal,
+                    toggleApiKeyInModalVisibility
                 };
-            }
+            }   
         }).mount('#app');
     </script>
 </body>
