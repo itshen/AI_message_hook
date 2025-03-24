@@ -2,6 +2,7 @@ from flask import Blueprint, render_template, request, Response, jsonify, curren
 import requests
 import time
 import json
+import os
 from app import db
 from app.models import Request as RequestModel, Response as ResponseModel
 
@@ -12,6 +13,17 @@ main_bp = Blueprint('main', __name__)
 def index():
     """显示请求列表的主页面"""
     return render_template('index.html')
+
+@main_bp.route('/api/readme')
+def get_readme():
+    """获取README.md内容的API"""
+    readme_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'README.md')
+    try:
+        with open(readme_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+        return jsonify({'content': content})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 @main_bp.route('/api/requests')
 def get_requests():

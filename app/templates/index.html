@@ -49,15 +49,162 @@
         .dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
             background-color: rgba(156, 163, 175, 0.7);
         }
+
+        /* Markdown样式 */
+        .markdown-body h1 {
+            font-size: 1.75rem;
+            font-weight: bold;
+            margin-top: 1rem;
+            margin-bottom: 1rem;
+        }
+        .markdown-body h2 {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-top: 1rem;
+            margin-bottom: 0.75rem;
+        }
+        .markdown-body h3 {
+            font-size: 1.25rem;
+            font-weight: bold;
+            margin-top: 0.75rem;
+            margin-bottom: 0.5rem;
+        }
+        .markdown-body p {
+            margin-bottom: 0.75rem;
+        }
+        .markdown-body ul {
+            list-style-type: disc;
+            padding-left: 1.5rem;
+            margin-bottom: 0.75rem;
+        }
+        .markdown-body li {
+            margin-bottom: 0.25rem;
+        }
+        .markdown-body code {
+            background-color: rgba(255,255,255,0.1);
+        }
+        .markdown-body pre {
+            background-color: transparent;
+            padding: 0;
+            margin-bottom: 1rem;
+            overflow: visible;
+            position: relative;
+        }
+        .markdown-body pre code {
+            display: block;
+            background-color: rgba(175, 184, 193, 0.2);
+            padding: 16px;
+            border-radius: 6px;
+            overflow-x: auto;
+        }
+        .dark .markdown-body code {
+            background-color: rgba(255,255,255,0.1);
+        }
+        .code-block-wrapper {
+            position: relative;
+            margin-bottom: 1rem;
+        }
+        .copy-code-button {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            padding: 0.25rem 0.5rem;
+            background-color: rgba(0,0,0,0.1);
+            border-radius: 0.25rem;
+            font-size: 0.75rem;
+            color: #6b7280;
+            cursor: pointer;
+            transition: all 0.2s;
+            z-index: 10;
+        }
+        .copy-code-button:hover {
+            background-color: rgba(0,0,0,0.2);
+        }
+        .dark .copy-code-button {
+            background-color: rgba(255,255,255,0.1);
+            color: #d1d5db;
+        }
+        .dark .copy-code-button:hover {
+            background-color: rgba(255,255,255,0.2);
+        }
+        .copy-success {
+            background-color: rgba(16, 185, 129, 0.2) !important;
+        }
+        .wechat-info {
+            text-align: center;
+            margin-top: 1rem;
+            padding: 0.5rem;
+            background-color: rgba(0,0,0,0.05);
+            border-radius: 0.25rem;
+            font-size: 0.875rem;
+            color: #6b7280;
+        }
+        .dark .wechat-info {
+            background-color: rgba(255,255,255,0.1);
+            color: #d1d5db;
+        }
+        .markdown-content code {
+            background-color: rgba(175, 184, 193, 0.2);
+            padding: 0.2em 0.4em;
+            border-radius: 3px;
+            font-family: ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, Liberation Mono, monospace;
+            font-size: 85%;
+        }
+        
+        .markdown-content pre code {
+            display: block;
+            padding: 16px;
+            overflow-x: auto;
+            line-height: 1.45;
+            background-color: rgba(175, 184, 193, 0.2);
+            border-radius: 6px;
+        }
+        
+        .dark .markdown-content code, .dark .markdown-content pre code {
+            background-color: rgba(110, 118, 129, 0.4);
+        }
     </style>
 </head>
 <body class="bg-gray-50 dark:bg-gray-900 h-screen overflow-hidden">
     {% raw %}
     <div id="app" v-cloak class="container mx-auto p-4 h-screen flex flex-col">
-        <header class="bg-white dark:bg-gray-800 shadow rounded-lg p-4 mb-6">
-            <h1 class="text-2xl font-bold text-gray-900 dark:text-white">AI 请求 HOOKER</h1>
-            <p class="text-gray-600 dark:text-gray-300">捕获并分析所有 OpenRouter API 请求</p>
+        <header class="bg-white dark:bg-gray-800 shadow rounded-lg p-4 mb-6 flex justify-between items-center">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900 dark:text-white">AI 请求 HOOKER</h1>
+                <p class="text-gray-600 dark:text-gray-300">捕获并分析所有 OpenRouter API 请求</p>
+            </div>
+            <button 
+                @click="showReadme = true" 
+                class="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg shadow">
+                使用说明
+            </button>
         </header>
+
+        <!-- README模态框 -->
+        <div v-if="showReadme" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-4xl w-full max-h-screen overflow-hidden flex flex-col">
+                <div class="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+                    <h2 class="text-xl font-bold text-gray-900 dark:text-white">使用说明</h2>
+                    <button @click="showReadme = false" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+                <div class="p-6 flex-grow overflow-y-auto custom-scrollbar">
+                    <div v-if="readmeLoading" class="flex justify-center items-center h-full">
+                        <svg class="animate-spin h-10 w-10 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                    </div>
+                    <div v-else-if="readmeError" class="text-center text-red-500 py-4">
+                        加载README失败: {{ readmeError }}
+                    </div>
+                    <div v-else class="markdown-body text-gray-900 dark:text-gray-100" v-html="renderedReadme"></div>
+                </div>
+            </div>
+        </div>
 
         <div class="flex flex-col md:flex-row gap-6 flex-grow overflow-hidden">
             <!-- 请求列表 -->
@@ -112,6 +259,11 @@
                         :class="{'opacity-50 cursor-not-allowed': currentPage === totalPages}">
                         下一页
                     </button>
+                </div>
+                
+                <!-- 微信公众号信息 -->
+                <div class="wechat-info mt-4 pt-2 border-t border-gray-200 dark:border-gray-700">
+                    微信公众号 搜索 "洛小山" 进行反馈
                 </div>
             </div>
             
@@ -213,7 +365,7 @@
     {% endraw %}
 
     <script>
-        const { createApp, ref, onMounted } = Vue;
+        const { createApp, ref, onMounted, watch, nextTick } = Vue;
         
         createApp({
             setup() {
@@ -223,6 +375,10 @@
                 const currentPage = ref(1);
                 const totalPages = ref(1);
                 const totalRequests = ref(0);
+                const showReadme = ref(false);
+                const readmeLoading = ref(false);
+                const readmeError = ref(null);
+                const renderedReadme = ref('');
                 
                 // 获取请求列表
                 const fetchRequests = async (page = 1, perPage = 10) => {
@@ -313,6 +469,70 @@
                     }, 10000);
                 });
                 
+                // 获取README内容
+                const fetchReadme = async () => {
+                    if (!renderedReadme.value && showReadme.value) {
+                        const response = await axios.get('/api/readme');
+                        renderedReadme.value = renderMarkdown(response.data.content);
+                    }
+                };
+                
+                // 监听README模态框的可见性
+                watch(showReadme, (visible) => {
+                    if (visible) {
+                        fetchReadme();
+                    }
+                });
+                
+                // 简单的Markdown渲染函数
+                const renderMarkdown = (markdown) => {
+                    if (!markdown) return '';
+                    
+                    // 保存代码块内容，避免被后续处理影响
+                    const codeBlocks = [];
+                    let codeIndex = 0;
+                    
+                    // 提取代码块并替换为占位符
+                    let withoutCode = markdown.replace(/```(\w*)\n([\s\S]*?)```/g, (match, lang, code) => {
+                        const placeholder = `___CODE_BLOCK_${codeIndex}___`;
+                        // 创建代码块HTML，不包含复制按钮
+                        codeBlocks.push({
+                            placeholder,
+                            html: `<pre><code class="language-${lang || 'text'}">${code.trim()}</code></pre>`
+                        });
+                        codeIndex++;
+                        return placeholder;
+                    });
+                    
+                    // 转义HTML字符 (不包括代码块)
+                    let html = withoutCode
+                        .replace(/&/g, '&amp;')
+                        .replace(/</g, '&lt;')
+                        .replace(/>/g, '&gt;');
+                    
+                    // 替换内联代码
+                    html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+                    
+                    // 替换标题
+                    html = html.replace(/^# (.+)$/gm, '<h1>$1</h1>')
+                                 .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+                                 .replace(/^### (.+)$/gm, '<h3>$1</h3>');
+                    
+                    // 替换列表
+                    html = html.replace(/^- (.+)$/gm, '<li>$1</li>')
+                                 .replace(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>');
+                    
+                    // 替换段落，排除已经被标签包裹的内容
+                    html = html.replace(/^(?!<h|<ul|<li|<pre|<code|___CODE_BLOCK)(.+)$/gm, '<p>$1</p>');
+                    
+                    // 恢复代码块
+                    codeBlocks.forEach(block => {
+                        html = html.replace(block.placeholder, block.html);
+                    });
+                    
+                    return html;
+                };
+                
                 return {
                     requests,
                     selectedRequest,
@@ -326,7 +546,11 @@
                     changePage,
                     copyToClipboard,
                     formatResponseBody,
-                    JSON
+                    JSON,
+                    showReadme,
+                    readmeLoading,
+                    readmeError,
+                    renderedReadme
                 };
             }
         }).mount('#app');
