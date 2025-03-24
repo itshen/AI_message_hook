@@ -1,8 +1,20 @@
 # AI 请求 HOOKER
 
-一个用于捕获和记录 OpenRouter API 请求和响应的代理服务器。
+一个用于捕获和记录 AI API 请求和响应的代理服务器。支持多种主流 AI 服务，包括 OpenAI、千问、智谱等。
 
-## 使用前准备
+## 支持的 API 服务
+
+目前支持以下 AI 服务：
+
+- OpenAI ([获取 Key](https://platform.openai.com/api-keys))
+- 千问 ([获取 Key](https://bailian.console.aliyun.com/?apiKey=1))
+- 智谱 AI ([获取 Key](https://open.bigmodel.cn/usercenter/apikeys))
+- MiniMax ([获取 Key](https://platform.minimaxi.com/user-center/basic-information/interface-key))
+- DeepSeek ([获取 Key](https://platform.deepseek.com/))
+- 硅基流动 ([获取 Key](https://cloud.siliconflow.cn/i/gQhQNfpv))
+- OpenRouter ([获取 Key](https://openrouter.ai/settings/keys))
+
+## 使用前准备（以 OpenRouter 为例）
 
 ### 注册 OpenRouter 账号
 
@@ -29,15 +41,26 @@ cd AI_message_hook
 pip install -r requirements.txt
 
 # 启动应用
-python app.py
+python run.py
 ```
 
-## 特性
+## 主要功能
 
-- 捕获所有 OpenRouter API 请求
-- 查看请求和响应的详细信息
+- 支持多种主流 AI API 服务
+- 自动替换/补全 API Key
+- 自动替换/补全模型名称
+- 实时监控请求和响应
 - 支持流式响应的实时监控
+- 请求历史记录和详情查看
+- 请求头和请求体变更对比
 - 简洁美观的用户界面
+
+## 使用说明
+
+1. 启动服务后，访问 `http://localhost:7860`
+2. 在设置中配置相应服务的 API Key
+3. 选择需要使用的 AI 服务
+4. 开始使用您的应用程序，所有的 API 请求都会被记录
 
 ## 许可证
 
