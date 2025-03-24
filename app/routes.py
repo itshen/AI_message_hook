@@ -79,6 +79,34 @@ def get_request_detail(request_id):
     
     return jsonify(request_data)
 
+@main_bp.route('/api/requests/<int:request_id>', methods=['DELETE'])
+def delete_request(request_id):
+    """删除单个请求记录的API"""
+    req = RequestModel.query.get_or_404(request_id)
+    
+    # 先删除关联的响应记录
+    for resp in req.responses:
+        db.session.delete(resp)
+    
+    # 再删除请求记录
+    db.session.delete(req)
+    db.session.commit()
+    
+    return jsonify({'message': '请求记录已成功删除'})
+
+@main_bp.route('/api/requests', methods=['DELETE'])
+def delete_all_requests():
+    """清空所有请求记录的API"""
+    # 先删除所有响应记录
+    ResponseModel.query.delete()
+    
+    # 再删除所有请求记录
+    RequestModel.query.delete()
+    
+    db.session.commit()
+    
+    return jsonify({'message': '所有请求记录已成功清空'})
+
 # 代理服务路由
 proxy_bp = Blueprint('proxy', __name__, url_prefix='/api/v1')
 

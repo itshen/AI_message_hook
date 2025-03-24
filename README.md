@@ -2,68 +2,45 @@
 
 一个用于捕获和记录 OpenRouter API 请求和响应的代理服务器。
 
-## 功能特点
+## 使用前准备
 
-- 拦截所有到 OpenRouter API 的请求
-- 记录请求和响应数据到 SQLite 数据库
-- 支持普通请求和流式请求
-- 提供美观的 Web 界面查看请求历史
-- 可复制请求和响应数据
+### 注册 OpenRouter 账号
 
-## 技术栈
+1. 访问 [OpenRouter 官网](https://openrouter.ai/)
+2. 点击右上角的 "Sign In" 按钮
+3. 选择您喜欢的登录方式（GitHub、Google 或 Email）
+4. 按照提示完成注册流程
 
-- 后端：Flask
-- 前端：HTML + TailwindCSS + Vue.js
-- 数据库：SQLite
+### 获取 API 密钥
 
-## 安装方法
+1. 登录 OpenRouter 账号后，访问 [API 密钥设置页面](https://openrouter.ai/settings/keys)
+2. 点击 "Create Key" 按钮创建新的 API 密钥
+3. 为密钥添加描述（可选）
+4. 复制生成的 API 密钥，它将用于您的应用程序中（比如 Cline）
 
-1. 克隆此仓库
+## 安装与配置
 
 ```bash
-git clone https://github.com/yourusername/AI_message_hook.git
+# 克隆仓库
+git clone https://github.com/itshen/AI_message_hook
 cd AI_message_hook
+
+# 安装依赖
+pip install -r requirements.txt
+
+# 启动应用
+python app.py
 ```
 
-2. 创建虚拟环境（推荐）
+## 特性
 
-```bash
-python -m venv venv
-source venv/bin/activate  # Linux/Mac
-# 或者
-venv\Scripts\activate  # Windows
-```
-
-3. 安装依赖
-
-```bash
-pip install flask flask-sqlalchemy requests
-```
-
-## 使用方法
-
-1. 启动服务器
-
-```bash
-python run.py
-```
-
-2. 访问 Web 界面
-
-在浏览器中打开 http://localhost:8876 查看 Web 界面。
-
-3. 配置客户端
-
-将您的 OpenRouter 客户端配置为使用 `http://localhost:8876/api/v1` 代替 `https://openrouter.ai/api/v1`。
-
-## 请求路由
-
-所有发送到 `/api/v1/*` 的请求将被代理到 OpenRouter API，并记录请求和响应数据。
-
-例如：
-- 原始请求：`https://openrouter.ai/api/v1/chat/completions`
-- 代理请求：`http://localhost:8876/api/v1/chat/completions`
+- 捕获所有 OpenRouter API 请求
+- 查看请求和响应的详细信息
+- 支持流式响应的实时监控
+- 简洁美观的用户界面
 
 ## 许可证
 
-MIT 
+本项目采用 MIT 许可证。详见 LICENSE 文件。
+
+版权所有 © 2024 Miyang Technology (Shenzhen) Co., Ltd. 
