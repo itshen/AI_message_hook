@@ -168,69 +168,81 @@
 <body class="bg-gray-50 dark:bg-gray-900 h-screen overflow-hidden">
     {% raw %}
     <div id="app" v-cloak class="container mx-auto p-4 h-screen flex flex-col">
-        <header class="bg-white dark:bg-gray-800 shadow rounded-lg p-4 mb-6 flex justify-between items-center">
-            <div>
-                <h1 class="text-2xl font-bold text-gray-900 dark:text-white">AI 请求 HOOKER</h1>
-                <p class="text-gray-600 dark:text-gray-300">捕获并分析所有 OpenRouter API 请求</p>
-            </div>
-            <div class="flex space-x-4">
-                <!-- Base URL 设置按钮 -->
-                <button 
-                    @click="showSettings = true" 
-                    class="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg shadow">
-                    API 设置
-                </button>
-                <button 
-                    @click="showReadme = true" 
-                    class="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg shadow">
-                    使用说明
-                </button>
-            </div>
-        </header>
-
-        <!-- 当前配置显示和快速切换 -->
-        <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-4 mb-6">
-            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center">
-                <div class="mb-3 sm:mb-0">
-                    <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">当前 API 配置</h2>
-                    <div class="text-sm text-gray-700 dark:text-gray-300 flex flex-col md:flex-row md:items-center">
-                        <div class="mr-4 mb-1 md:mb-0"><span class="font-medium">API 服务:</span> {{ getBaseUrlName(selectedBaseUrl === 'custom' ? customBaseUrl : selectedBaseUrl) }}</div>
-                        <div class="mr-4 mb-1 md:mb-0 flex items-center">
-                            <span class="font-medium">API Key:</span> 
-                            <span class="ml-1">{{ apiKey ? (showApiKey ? apiKey : maskApiKey(apiKey)) : '' }}</span>
-                            <button @click="toggleApiKeyVisibility" class="ml-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
-                                <svg v-if="showApiKey" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-                                </svg>
-                                <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"></path>
-                                </svg>
-                            </button>
-                        </div>
-                        <div><span class="font-medium">默认模型:</span> {{ defaultModel || '' }}</div>
+        <header class="bg-white dark:bg-gray-800 shadow rounded-lg p-4 mb-6">
+            <div class="flex flex-col gap-4">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">AI 请求 HOOKER</h1>
+                        <p class="text-gray-600 dark:text-gray-300">捕获并分析 OpenAI 标准的 API 请求</p>
                     </div>
-                </div>
-                
-                <!-- 快速切换按钮 -->
-                <div class="w-full sm:w-auto" v-if="savedConfigs.length > 0">
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">快速切换:</label>
-                    <div class="flex flex-wrap gap-2">
+                    
+                    <!-- 功能按钮 -->
+                    <div class="flex space-x-2">
                         <button 
-                            v-for="config in savedConfigs" 
-                            :key="config.url"
-                            @click="quickSwitchConfig(config.url)"
-                            class="px-3 py-1 text-xs rounded-full"
-                            :class="{
-                                'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200': (selectedBaseUrl === config.url) || (selectedBaseUrl === 'custom' && customBaseUrl === config.url),
-                                'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600': !((selectedBaseUrl === config.url) || (selectedBaseUrl === 'custom' && customBaseUrl === config.url))
-                            }">
-                            {{ config.name }}
+                            @click="showSettings = true" 
+                            class="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg shadow">
+                            API 设置
+                        </button>
+                        <button 
+                            @click="showReadme = true" 
+                            class="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg shadow">
+                            使用说明
                         </button>
                     </div>
                 </div>
+                
+                <!-- 灰色分隔线 -->
+                <hr class="border-t border-gray-300 dark:border-gray-600 w-full my-1">
+                
+                <div class="flex flex-wrap justify-between items-center">
+                    <!-- API配置信息 -->
+                    <div class="text-sm text-gray-700 dark:text-gray-300 flex flex-wrap items-center">
+                        <span class="font-medium mr-1">API 服务:</span> 
+                        <span>{{ getBaseUrlName(selectedBaseUrl === 'custom' ? customBaseUrl : selectedBaseUrl) }}</span>
+                        <span class="mx-2 text-gray-400">|</span>
+                        <span class="font-medium mr-1">API Key:</span>
+                        <span>{{ apiKey ? (showApiKey ? apiKey : maskApiKey(apiKey)) : '' }}</span>
+                        <button @click="toggleApiKeyVisibility" class="ml-1 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+                            <svg v-if="showApiKey" class="w-4 h-4 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                            </svg>
+                            <svg v-else class="w-4 h-4 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"></path>
+                            </svg>
+                        </button>
+                        <span class="mx-2 text-gray-400">|</span>
+                        <span class="font-medium mr-1">默认模型:</span> {{ defaultModel || '' }}
+                        <span class="mx-2 text-gray-400">|</span>
+                        <span class="font-medium mr-1">自动替换:</span> 
+                        <span :class="{'text-green-600 dark:text-green-400': autoReplaceKey, 'text-gray-500 dark:text-gray-500': !autoReplaceKey}">
+                            Key {{ autoReplaceKey ? (keyReplaceMode === 'force' ? '(强制)' : '(补全)') : '✗' }}
+                        </span>
+                        <span class="mx-1">/</span>
+                        <span :class="{'text-green-600 dark:text-green-400': autoReplaceModel, 'text-gray-500 dark:text-gray-500': !autoReplaceModel}">
+                            模型 {{ autoReplaceModel ? (modelReplaceMode === 'force' ? '(强制)' : '(补全)') : '✗' }}
+                        </span>
+                    </div>
+                    
+                    <!-- 快速切换按钮 -->
+                    <div v-if="savedConfigs.length > 0" class="mt-2 md:mt-0">
+                        <div class="flex flex-wrap gap-2 justify-end">
+                            <button 
+                                v-for="config in savedConfigs" 
+                                :key="config.url"
+                                @click="quickSwitchConfig(config.url)"
+                                class="px-3 py-1 text-xs rounded-full"
+                                :class="{
+                                    'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200': (selectedBaseUrl === config.url) || (selectedBaseUrl === 'custom' && customBaseUrl === config.url),
+                                    'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600': !((selectedBaseUrl === config.url) || (selectedBaseUrl === 'custom' && customBaseUrl === config.url))
+                                }">
+                                {{ config.name }}
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
-        </div>
+        </header>
 
         <!-- API 设置模态框 -->
         <div v-if="showSettings" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -306,8 +318,96 @@
                         />
                     </div>
                     
+                    <!-- 添加自动替换选项 -->
+                    <div class="mb-4">
+                        <h3 class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">自动替换配置</h3>
+                        
+                        <div class="mb-4">
+                            <div class="flex items-center mb-2">
+                                <input 
+                                    type="checkbox" 
+                                    id="autoReplaceKey" 
+                                    v-model="autoReplaceKey"
+                                    class="w-4 h-4 text-blue-600 bg-gray-100 rounded border-gray-300 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600"
+                                />
+                                <label for="autoReplaceKey" class="ml-2 text-sm text-gray-700 dark:text-gray-300">
+                                    自动替换 API Key
+                                </label>
+                            </div>
+                            
+                            <div v-if="autoReplaceKey" class="ml-6 mt-1 mb-3">
+                                <div class="flex items-center">
+                                    <input 
+                                        type="radio" 
+                                        id="keyReplaceMissing" 
+                                        value="missing" 
+                                        v-model="keyReplaceMode"
+                                        class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600"
+                                    />
+                                    <label for="keyReplaceMissing" class="ml-2 text-sm text-gray-700 dark:text-gray-300">
+                                        缺少时补全
+                                    </label>
+                                </div>
+                                <div class="flex items-center mt-1">
+                                    <input 
+                                        type="radio" 
+                                        id="keyReplaceForce" 
+                                        value="force" 
+                                        v-model="keyReplaceMode"
+                                        class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600"
+                                    />
+                                    <label for="keyReplaceForce" class="ml-2 text-sm text-gray-700 dark:text-gray-300">
+                                        强制替换
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <div class="flex items-center mb-2">
+                                <input 
+                                    type="checkbox" 
+                                    id="autoReplaceModel" 
+                                    v-model="autoReplaceModel"
+                                    class="w-4 h-4 text-blue-600 bg-gray-100 rounded border-gray-300 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600"
+                                />
+                                <label for="autoReplaceModel" class="ml-2 text-sm text-gray-700 dark:text-gray-300">
+                                    自动替换模型名称
+                                </label>
+                            </div>
+                            
+                            <div v-if="autoReplaceModel" class="ml-6 mt-1">
+                                <div class="flex items-center">
+                                    <input 
+                                        type="radio" 
+                                        id="modelReplaceMissing" 
+                                        value="missing" 
+                                        v-model="modelReplaceMode"
+                                        class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600"
+                                    />
+                                    <label for="modelReplaceMissing" class="ml-2 text-sm text-gray-700 dark:text-gray-300">
+                                        缺少时补全
+                                    </label>
+                                </div>
+                                <div class="flex items-center mt-1">
+                                    <input 
+                                        type="radio" 
+                                        id="modelReplaceForce" 
+                                        value="force" 
+                                        v-model="modelReplaceMode"
+                                        class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600"
+                                    />
+                                    <label for="modelReplaceForce" class="ml-2 text-sm text-gray-700 dark:text-gray-300">
+                                        强制替换
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
                     <div class="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                        <p>注：当检测到 API 请求中未包含 Key 或模型名称时，将自动使用此处配置的默认值。</p>
+                        <p>注：勾选相应选项后，根据替换模式处理API请求。</p>
+                        <p class="mt-1">「缺少时补全」仅在请求中缺少相应参数时使用默认值；「强制替换」会替换请求中已有的参数值。</p>
                         <p class="mt-1">所有设置将保存在您的浏览器本地存储中，不会上传至服务器。</p>
                     </div>
                     
@@ -316,6 +416,11 @@
                             @click="showSettings = false" 
                             class="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg">
                             取消
+                        </button>
+                        <button 
+                            @click="checkCurrentSettings" 
+                            class="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg">
+                            检查当前设置
                         </button>
                         <button 
                             @click="saveSettings" 
@@ -438,16 +543,40 @@
                 
                 <div v-else>
                     <div class="mb-6">
-                        <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">请求详情</h2>
-                        <div class="text-sm text-gray-700 dark:text-gray-300">
-                            <div class="mb-1"><span class="font-medium">ID:</span> {{ selectedRequest.id }}</div>
-                            <div class="mb-1"><span class="font-medium">时间:</span> {{ formatDate(selectedRequest.timestamp) }}</div>
-                            <div class="mb-1"><span class="font-medium">方法:</span> {{ selectedRequest.method }}</div>
-                            <div class="mb-1"><span class="font-medium">路径:</span> {{ selectedRequest.path || '/' }}</div>
-                            <div class="mb-1" v-if="getBaseUrlFromRequest(selectedRequest)"><span class="font-medium">API服务:</span> {{ getBaseUrlFromRequest(selectedRequest) }}</div>
-                            <div class="mb-1" v-if="getApiKeyFromRequest(selectedRequest)">
-                                <span class="font-medium">API Key:</span> 
-                                <span>{{ getApiKeyFromRequest(selectedRequest) }}</span>
+                        <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-3">请求详情</h2>
+                        
+                        <!-- 标签式展示请求基本信息 -->
+                        <div class="flex flex-wrap items-center gap-2 mb-3">
+                            <span class="inline-flex items-center rounded-md bg-gray-100 dark:bg-gray-700 px-2.5 py-1 text-sm font-medium text-gray-800 dark:text-gray-200">
+                                ID: {{ selectedRequest.id }}
+                            </span>
+                            <span class="inline-flex items-center rounded-md bg-gray-100 dark:bg-gray-700 px-2.5 py-1 text-sm font-medium text-gray-800 dark:text-gray-200">
+                                {{ formatDate(selectedRequest.timestamp) }}
+                            </span>
+                            <span class="inline-flex items-center rounded-md px-2.5 py-1 text-sm font-medium"
+                                  :class="{
+                                      'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200': selectedRequest.method === 'GET',
+                                      'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200': selectedRequest.method === 'POST',
+                                      'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200': selectedRequest.method === 'PUT',
+                                      'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200': selectedRequest.method === 'DELETE'
+                                  }">
+                                {{ selectedRequest.method }}
+                            </span>
+                            <span class="inline-flex items-center rounded-md bg-indigo-100 dark:bg-indigo-900 px-2.5 py-1 text-sm font-medium text-indigo-800 dark:text-indigo-200">
+                                {{ getApiServiceName(selectedRequest) }}
+                            </span>
+                        </div>
+                        
+                        <!-- 请求完整路径 -->
+                        <div class="mb-3 px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm overflow-x-auto">
+                            <code class="font-mono text-blue-600 dark:text-blue-400">{{ getBaseUrlFromRequest(selectedRequest) }}{{ selectedRequest.path || '/' }}</code>
+                        </div>
+                        
+                        <!-- API Key 信息 -->
+                        <div class="mb-3" v-if="getApiKeyFromRequest(selectedRequest)">
+                            <div class="flex items-center">
+                                <span class="px-2.5 py-1 bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 text-sm font-medium rounded-md mr-2">API Key</span>
+                                <span class="text-sm text-gray-700 dark:text-gray-300">{{ getApiKeyFromRequest(selectedRequest) }}</span>
                                 <button @click="toggleRequestApiKeyVisibility(selectedRequest)" class="ml-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
                                     <svg v-if="selectedRequest.showApiKey" class="w-4 h-4 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
@@ -458,43 +587,156 @@
                                     </svg>
                                 </button>
                             </div>
-                            <div class="mb-1" v-if="getModelFromRequest(selectedRequest)"><span class="font-medium">模型:</span> {{ getModelFromRequest(selectedRequest) }}</div>
+                        </div>
+                        
+                        <!-- 模型信息 -->
+                        <div class="mb-3" v-if="getModelFromRequest(selectedRequest)">
+                            <div class="flex items-center">
+                                <span class="px-2.5 py-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 text-sm font-medium rounded-md mr-2">模型</span>
+                                <div class="flex flex-col">
+                                    <!-- 检查是否有模型变更 -->
+                                    <div v-if="modelChanged(selectedRequest)" class="text-sm">
+                                        <div class="flex items-center">
+                                            <span class="text-red-500 line-through mr-2">{{ getOriginalModelFromRequest(selectedRequest) }}</span>
+                                            <svg class="w-4 h-4 text-gray-500 mx-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+                                            </svg>
+                                            <span class="text-green-500 ml-2">{{ getModifiedModelFromRequest(selectedRequest) }}</span>
+                                        </div>
+                                    </div>
+                                    <!-- 如果没有变更，只显示一个值 -->
+                                    <div v-else class="text-sm text-gray-700 dark:text-gray-300">
+                                        {{ getModelFromRequest(selectedRequest) }}
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     
                     <!-- 请求头部和主体 -->
                     <div class="mb-6">
-                        <div class="flex justify-between items-center mb-2">
-                            <h3 class="text-lg font-medium text-gray-900 dark:text-white">请求头</h3>
-                            <button @click="copyToClipboard(JSON.stringify(selectedRequest.headers, null, 2))" 
-                                    class="text-xs text-blue-600 dark:text-blue-400">复制</button>
+                        <div class="flex justify-between items-center mb-3">
+                            <h3 class="text-lg font-medium flex items-center text-gray-900 dark:text-white">
+                                <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                </svg>
+                                请求头 (变更对比)
+                            </h3>
+                            <button @click="copyToClipboard(JSON.stringify(selectedRequest.headers.modified, null, 2))" 
+                                    class="text-xs bg-blue-50 hover:bg-blue-100 dark:bg-blue-900 dark:hover:bg-blue-800 text-blue-600 dark:text-blue-400 px-2 py-1 rounded">复制最终头</button>
                         </div>
-                        <div class="bg-gray-100 dark:bg-gray-700 p-3 rounded json-viewer max-h-40 overflow-y-auto custom-scrollbar">
-                            {{ JSON.stringify(selectedRequest.headers, null, 2) }}
+                        
+                        <!-- 请求头对比表格 -->
+                        <div class="bg-gray-50 dark:bg-gray-700 rounded-lg overflow-hidden mb-4 border border-gray-200 dark:border-gray-600">
+                            <div class="flex justify-between items-center px-4 py-2 bg-gray-100 dark:bg-gray-800">
+                                <div class="flex items-center">
+                                    <input 
+                                        type="checkbox" 
+                                        id="showOnlyDiff" 
+                                        v-model="showOnlyHeaderDiff"
+                                        class="w-4 h-4 mr-2 text-blue-600 bg-gray-100 rounded border-gray-300 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600"
+                                    />
+                                    <label for="showOnlyDiff" class="text-xs font-medium text-gray-700 dark:text-gray-300">仅显示变更</label>
+                                </div>
+                            </div>
+                            <table class="w-full divide-y divide-gray-200 dark:divide-gray-600 table-fixed">
+                                <thead class="bg-gray-100 dark:bg-gray-800">
+                                    <tr>
+                                        <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider" style="width: 20%">名称</th>
+                                        <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider" style="width: 40%">原始值</th>
+                                        <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider" style="width: 40%">修改后值</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-200 dark:divide-gray-600">
+                                    <!-- 检查头是否存在变更 -->
+                                    <template v-if="headersChanged(selectedRequest)">
+                                        <!-- 遍历所有唯一的头名称 -->
+                                        <tr v-for="header in getAllHeaderKeys(selectedRequest)" :key="header" 
+                                            :class="{ 
+                                                'bg-green-50 dark:bg-green-900': headersColorClass(selectedRequest, header) === 'added',
+                                                'bg-red-50 dark:bg-red-900': headersColorClass(selectedRequest, header) === 'removed',
+                                                'bg-yellow-50 dark:bg-yellow-900': headersColorClass(selectedRequest, header) === 'changed',
+                                                'hover:bg-gray-100 dark:hover:bg-gray-650': headersColorClass(selectedRequest, header) === ''
+                                            }"
+                                            v-show="!showOnlyHeaderDiff || headersColorClass(selectedRequest, header) !== ''">
+                                            <td class="px-4 py-3 text-xs font-medium truncate" style="width: 20%">{{ header }}</td>
+                                            <td class="px-4 py-3 text-xs font-mono overflow-hidden" style="width: 40%">
+                                                <div class="truncate hover:text-clip hover:overflow-visible" :title="selectedRequest.headers.original[header]">
+                                                    <span v-if="selectedRequest.headers.original[header]">{{ selectedRequest.headers.original[header] }}</span>
+                                                    <span v-else class="text-gray-400 dark:text-gray-500">-</span>
+                                                </div>
+                                            </td>
+                                            <td class="px-4 py-3 text-xs font-mono overflow-hidden" style="width: 40%">
+                                                <div class="truncate hover:text-clip hover:overflow-visible" :title="selectedRequest.headers.modified[header]">
+                                                    <span v-if="selectedRequest.headers.modified[header]">{{ selectedRequest.headers.modified[header] }}</span>
+                                                    <span v-else class="text-gray-400 dark:text-gray-500">-</span>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </template>
+                                    <tr v-else>
+                                        <td colspan="3" class="px-4 py-3 text-center text-sm text-gray-500 dark:text-gray-400">请求头没有变更</td>
+                                    </tr>
+                                </tbody>
+                            </table>
                         </div>
-                    </div>
-                    
-                    <div class="mb-6">
-                        <div class="flex justify-between items-center mb-2">
-                            <h3 class="text-lg font-medium text-gray-900 dark:text-white">请求体</h3>
-                            <button @click="copyToClipboard(JSON.stringify(selectedRequest.body, null, 2))" 
-                                    class="text-xs text-blue-600 dark:text-blue-400">复制</button>
+
+                        <div class="flex justify-between items-center mb-3">
+                            <h3 class="text-lg font-medium flex items-center text-gray-900 dark:text-white">
+                                <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                                </svg>
+                                请求体 (变更对比)
+                            </h3>
+                            <button @click="copyToClipboard(JSON.stringify(selectedRequest.body.modified, null, 2))" 
+                                    class="text-xs bg-blue-50 hover:bg-blue-100 dark:bg-blue-900 dark:hover:bg-blue-800 text-blue-600 dark:text-blue-400 px-2 py-1 rounded">复制最终请求体</button>
                         </div>
-                        <div class="bg-gray-100 dark:bg-gray-700 p-3 rounded json-viewer max-h-60 overflow-y-auto custom-scrollbar">
-                            {{ JSON.stringify(selectedRequest.body, null, 2) }}
+                        
+                        <!-- 请求体对比显示 -->
+                        <div v-if="selectedRequest.body && selectedRequest.body.original">
+                            <!-- 如果请求体有变化 -->
+                            <div v-if="bodyChanged(selectedRequest)" class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <div class="text-xs font-medium mb-1 text-gray-700 dark:text-gray-300">原始请求体:</div>
+                                    <div class="bg-gray-100 dark:bg-gray-700 p-3 rounded json-viewer max-h-60 overflow-y-auto custom-scrollbar">
+                                        {{ JSON.stringify(selectedRequest.body.original, null, 2) }}
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="text-xs font-medium mb-1 text-gray-700 dark:text-gray-300">修改后请求体:</div>
+                                    <div class="bg-gray-100 dark:bg-gray-700 p-3 rounded json-viewer max-h-60 overflow-y-auto custom-scrollbar">
+                                        {{ JSON.stringify(selectedRequest.body.modified, null, 2) }}
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- 如果请求体没有变化 -->
+                            <div v-else>
+                                <div class="text-center text-sm text-gray-500 dark:text-gray-400 mb-2">请求体没有变更</div>
+                                <div class="bg-gray-100 dark:bg-gray-700 p-3 rounded json-viewer max-h-60 overflow-y-auto custom-scrollbar">
+                                    {{ JSON.stringify(selectedRequest.body.original, null, 2) }}
+                                </div>
+                            </div>
+                        </div>
+                        <div v-else class="text-center text-sm text-gray-500 dark:text-gray-400 py-4">
+                            无请求体
                         </div>
                     </div>
                     
                     <!-- 响应部分 -->
                     <div v-if="selectedRequest.responses && selectedRequest.responses.length > 0">
-                        <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">响应</h3>
+                        <h3 class="text-lg font-medium flex items-center text-gray-900 dark:text-white mb-3">
+                            <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"></path>
+                            </svg>
+                            响应
+                        </h3>
                         
-                        <div v-for="(response, index) in selectedRequest.responses" :key="response.id" class="mb-6">
-                            <div class="mb-2 flex items-center justify-between">
+                        <div v-for="(response, index) in selectedRequest.responses" :key="response.id" class="mb-6 p-3 border border-gray-200 dark:border-gray-700 rounded-lg">
+                            <div class="mb-3 flex items-center justify-between">
                                 <div class="flex items-center">
                                     <span class="text-sm font-medium">状态码: </span>
                                     <span 
-                                        class="ml-2 px-2 py-0.5 text-xs rounded-full" 
+                                        class="ml-2 px-2.5 py-1 text-xs rounded-md" 
                                         :class="{
                                             'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200': response.status_code >= 200 && response.status_code < 300,
                                             'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200': response.status_code >= 300 && response.status_code < 400,
@@ -503,30 +745,43 @@
                                         {{ response.status_code }}
                                     </span>
                                 </div>
-                                <div class="text-sm text-gray-600 dark:text-gray-400">
-                                    <span>处理时间: {{ response.time_taken.toFixed(3) }}s</span>
-                                    <span v-if="response.is_stream" class="ml-2 px-2 py-0.5 text-xs bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200 rounded-full">流式</span>
+                                <div class="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                    <span>{{ response.time_taken.toFixed(3) }}s</span>
+                                    <span v-if="response.is_stream" class="ml-2 px-2.5 py-1 text-xs bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200 rounded-md">流式</span>
                                 </div>
                             </div>
                             
                             <div class="mb-4">
                                 <div class="flex justify-between items-center mb-2">
-                                    <h4 class="text-sm font-medium text-gray-900 dark:text-white">响应头</h4>
+                                    <h4 class="text-sm font-medium flex items-center text-gray-900 dark:text-white">
+                                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                        </svg>
+                                        响应头
+                                    </h4>
                                     <button @click="copyToClipboard(JSON.stringify(response.headers, null, 2))" 
-                                            class="text-xs text-blue-600 dark:text-blue-400">复制</button>
+                                            class="text-xs bg-blue-50 hover:bg-blue-100 dark:bg-blue-900 dark:hover:bg-blue-800 text-blue-600 dark:text-blue-400 px-2 py-1 rounded">复制</button>
                                 </div>
-                                <div class="bg-gray-100 dark:bg-gray-700 p-3 rounded json-viewer max-h-40 overflow-y-auto custom-scrollbar">
+                                <div class="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg border border-gray-200 dark:border-gray-600 json-viewer max-h-40 overflow-y-auto custom-scrollbar">
                                     {{ JSON.stringify(response.headers, null, 2) }}
                                 </div>
                             </div>
                             
                             <div>
                                 <div class="flex justify-between items-center mb-2">
-                                    <h4 class="text-sm font-medium text-gray-900 dark:text-white">响应体</h4>
+                                    <h4 class="text-sm font-medium flex items-center text-gray-900 dark:text-white">
+                                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                                        </svg>
+                                        响应体
+                                    </h4>
                                     <button @click="copyToClipboard(response.body)" 
-                                            class="text-xs text-blue-600 dark:text-blue-400">复制</button>
+                                            class="text-xs bg-blue-50 hover:bg-blue-100 dark:bg-blue-900 dark:hover:bg-blue-800 text-blue-600 dark:text-blue-400 px-2 py-1 rounded">复制</button>
                                 </div>
-                                <div class="bg-gray-100 dark:bg-gray-700 p-3 rounded json-viewer max-h-96 overflow-y-auto custom-scrollbar">
+                                <div class="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg border border-gray-200 dark:border-gray-600 json-viewer max-h-96 overflow-y-auto custom-scrollbar">
                                     {{ formatResponseBody(response.body) }}
                                 </div>
                             </div>
@@ -558,6 +813,9 @@
                 const readmeError = ref(null);
                 const renderedReadme = ref('');
                 
+                // 表格显示控制
+                const showOnlyHeaderDiff = ref(true);
+                
                 // API 设置相关
                 const showSettings = ref(false);
                 const selectedBaseUrl = ref('https://openrouter.ai/api/v1');
@@ -566,6 +824,12 @@
                 const defaultModel = ref('');
                 const showApiKey = ref(false);
                 const showApiKeyInModal = ref(false);
+                
+                // 添加自动替换配置选项
+                const autoReplaceKey = ref(true);
+                const autoReplaceModel = ref(true);
+                const keyReplaceMode = ref('missing');
+                const modelReplaceMode = ref('missing');
                 
                 // 新增加的函数和变量用于快速切换功能
                 const savedConfigs = ref([]);
@@ -635,7 +899,11 @@
                     // 为当前 BaseURL 创建配置对象
                     const config = {
                         api_key: apiKey.value,
-                        default_model: defaultModel.value
+                        default_model: defaultModel.value,
+                        auto_replace_key: autoReplaceKey.value,
+                        auto_replace_model: autoReplaceModel.value,
+                        key_replace_mode: keyReplaceMode.value,
+                        model_replace_mode: modelReplaceMode.value
                     };
                     
                     // 保存当前选择的 BaseURL
@@ -647,16 +915,60 @@
                     // 重新加载已保存的配置列表，用于主界面展示
                     loadSavedConfigs();
                     
-                    // 发送设置到服务器
-                    axios.post('/api/settings', {
-                        base_url: finalBaseUrl,
-                        api_key: apiKey.value,
-                        default_model: defaultModel.value
-                    }).then(() => {
+                    // 同时更新服务器配置 - 使用新API端点单独更新API Key和模型
+                    Promise.all([
+                        // 1. 更新API Key
+                        axios.post('/api/select_key', {
+                            api_key: config.api_key || '',
+                            replace_mode: config.key_replace_mode || 'force', // 确保保持替换模式
+                            auto_replace: config.auto_replace_key !== undefined ? config.auto_replace_key : true
+                        }).catch(error => {
+                            console.error('更新API Key失败', error);
+                            return null;
+                        }),
+                        
+                        // 2. 更新模型
+                        axios.post('/api/select_model', {
+                            model: config.default_model || '',
+                            replace_mode: config.model_replace_mode || 'force', // 确保保持替换模式
+                            auto_replace: config.auto_replace_model !== undefined ? config.auto_replace_model : true
+                        }).catch(error => {
+                            console.error('更新模型失败', error);
+                            return null;
+                        }),
+                        
+                        // 3. 更新服务端Base URL
+                        axios.post('/api/settings', {
+                            base_url: finalBaseUrl,
+                            api_key: config.api_key || '',
+                            default_model: config.default_model || '',
+                            auto_replace_key: config.auto_replace_key !== undefined ? config.auto_replace_key : true,
+                            auto_replace_model: config.auto_replace_model !== undefined ? config.auto_replace_model : true,
+                            key_replace_mode: config.key_replace_mode || 'force',
+                            model_replace_mode: config.model_replace_mode || 'force'
+                        }).catch(error => {
+                            console.error('保存设置失败', error);
+                            return null;
+                        })
+                    ]).then(responses => {
                         // 关闭设置窗口
                         showSettings.value = false;
+                        
+                        // 获取完整设置响应，它在responses数组的第三个位置
+                        const settingsResponse = responses[2];
+                        
+                        if (settingsResponse && settingsResponse.data) {
+                            // 添加保存成功提示
+                            alert(`设置保存成功！\n\n` +
+                                  `API Key替换模式: ${settingsResponse.data.key_replace_mode_text} (${settingsResponse.data.key_replace_mode})\n` +
+                                  `模型替换模式: ${settingsResponse.data.model_replace_mode_text} (${settingsResponse.data.model_replace_mode})\n\n` +
+                                  `如果设置不生效，请刷新页面后再试`);
+                        } else {
+                            alert('设置已保存，但服务器响应异常，请刷新页面确认设置是否生效');
+                        }
                     }).catch(error => {
-                        console.error('保存设置失败', error);
+                        console.error('保存设置过程中出错', error);
+                        alert('保存设置失败: ' + error.message);
                     });
                 };
                 
@@ -691,13 +1003,63 @@
                             apiKey.value = config.api_key || '';
                             defaultModel.value = config.default_model || '';
                             
-                            // 同时更新服务器配置
-                            axios.post('/api/settings', {
-                                base_url: url,
-                                api_key: config.api_key || '',
-                                default_model: config.default_model || ''
-                            }).catch(error => {
-                                console.error('更新配置失败', error);
+                            // 添加自动替换配置的加载
+                            autoReplaceKey.value = config.auto_replace_key !== undefined ? config.auto_replace_key : true;
+                            autoReplaceModel.value = config.auto_replace_model !== undefined ? config.auto_replace_model : true;
+                            keyReplaceMode.value = config.key_replace_mode || 'missing';
+                            modelReplaceMode.value = config.model_replace_mode || 'missing';
+                            
+                            // 同时更新服务器配置 - 使用新API端点单独更新API Key和模型
+                            Promise.all([
+                                // 1. 更新API Key
+                                axios.post('/api/select_key', {
+                                    api_key: config.api_key || '',
+                                    replace_mode: config.key_replace_mode || 'force', // 确保保持替换模式
+                                    auto_replace: config.auto_replace_key !== undefined ? config.auto_replace_key : true
+                                }).catch(error => {
+                                    console.error('更新API Key失败', error);
+                                    return null;
+                                }),
+                                
+                                // 2. 更新模型
+                                axios.post('/api/select_model', {
+                                    model: config.default_model || '',
+                                    replace_mode: config.model_replace_mode || 'force', // 确保保持替换模式
+                                    auto_replace: config.auto_replace_model !== undefined ? config.auto_replace_model : true
+                                }).catch(error => {
+                                    console.error('更新模型失败', error);
+                                    return null;
+                                }),
+                                
+                                // 3. 更新服务端Base URL
+                                axios.post('/api/settings', {
+                                    base_url: url,
+                                    api_key: config.api_key || '',
+                                    default_model: config.default_model || '',
+                                    auto_replace_key: config.auto_replace_key !== undefined ? config.auto_replace_key : true,
+                                    auto_replace_model: config.auto_replace_model !== undefined ? config.auto_replace_model : true,
+                                    key_replace_mode: config.key_replace_mode || 'force',
+                                    model_replace_mode: config.model_replace_mode || 'force'
+                                }).catch(error => {
+                                    console.error('更新配置失败', error);
+                                    return null;
+                                })
+                            ]).then(() => {
+                                // 显示提示信息
+                                const keyModeText = keyReplaceMode.value === 'force' ? '强制替换' : '缺少时补全';
+                                const modelModeText = modelReplaceMode.value === 'force' ? '强制替换' : '缺少时补全';
+                                
+                                // 添加简短提示，不要打断用户操作
+                                const urlName = getBaseUrlName(url);
+                                const notification = document.createElement('div');
+                                notification.className = 'fixed bottom-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50';
+                                notification.textContent = `已切换到 ${urlName} 配置`;
+                                document.body.appendChild(notification);
+                                
+                                // 2秒后自动消失
+                                setTimeout(() => {
+                                    notification.remove();
+                                }, 2000);
                             });
                             
                             // 保存为当前配置
@@ -707,13 +1069,6 @@
                         }
                     }
                 };
-                
-                // 监听设置模态框的可见性，加载已保存配置
-                watch(showSettings, (visible) => {
-                    if (visible) {
-                        loadSavedConfigs();
-                    }
-                });
                 
                 // 处理 BaseURL 选择变化
                 const handleBaseUrlChange = () => {
@@ -732,14 +1087,24 @@
                                 if (config.api_key || config.default_model) {
                                     apiKey.value = config.api_key || '';
                                     defaultModel.value = config.default_model || '';
+                                    
+                                    // 添加自动替换配置的加载
+                                    autoReplaceKey.value = config.auto_replace_key !== undefined ? config.auto_replace_key : true;
+                                    autoReplaceModel.value = config.auto_replace_model !== undefined ? config.auto_replace_model : true;
+                                    keyReplaceMode.value = config.key_replace_mode || 'missing';
+                                    modelReplaceMode.value = config.model_replace_mode || 'missing';
                                 }
                             } catch (e) {
                                 console.error('解析配置失败', e);
                             }
                         } else {
-                            // 如果没有配置，清空输入值
+                            // 如果没有配置，设置默认值
                             apiKey.value = '';
                             defaultModel.value = '';
+                            autoReplaceKey.value = true;
+                            autoReplaceModel.value = true;
+                            keyReplaceMode.value = 'missing';
+                            modelReplaceMode.value = 'missing';
                         }
                     }
                 };
@@ -865,6 +1230,33 @@
                     }
                 };
                 
+                // 新增检查当前设置函数
+                const checkCurrentSettings = () => {
+                    axios.get('/api/settings')
+                        .then(response => {
+                            const settings = response.data;
+                            alert(
+                                `当前服务器设置：\n` +
+                                `API服务: ${settings.base_url}\n` +
+                                `API Key: ${settings.api_key || '未设置'}\n` +
+                                `默认模型: ${settings.default_model || '未设置'}\n` +
+                                `自动替换Key: ${settings.auto_replace_key ? '开启' : '关闭'} (${settings.key_replace_mode_text})\n` +
+                                `自动替换模型: ${settings.auto_replace_model ? '开启' : '关闭'} (${settings.model_replace_mode_text})\n\n` +
+                                `系统设置内部值：\n` +
+                                `Key替换模式: ${settings.key_replace_mode}\n` +
+                                `模型替换模式: ${settings.model_replace_mode}\n\n` +
+                                `提示：如果替换功能不生效，请尝试以下步骤：\n` +
+                                `1. 检查是否正确保存了设置\n` +
+                                `2. 刷新页面后再发送API请求\n` +
+                                `3. 查看服务器日志获取详细替换过程信息`
+                            );
+                        })
+                        .catch(error => {
+                            console.error('获取设置失败', error);
+                            alert('获取当前设置失败: ' + (error.response?.data?.message || error.message || '未知错误'));
+                        });
+                };
+                
                 // 初始化
                 onMounted(() => {
                     fetchRequests();
@@ -900,6 +1292,11 @@
                                 const config = JSON.parse(savedConfig);
                                 apiKey.value = config.api_key || '';
                                 defaultModel.value = config.default_model || '';
+                                // 添加自动替换配置的加载
+                                autoReplaceKey.value = config.auto_replace_key !== undefined ? config.auto_replace_key : true;
+                                autoReplaceModel.value = config.auto_replace_model !== undefined ? config.auto_replace_model : true;
+                                keyReplaceMode.value = config.key_replace_mode || 'missing';
+                                modelReplaceMode.value = config.model_replace_mode || 'missing';
                             } catch (e) {
                                 console.error('解析配置失败', e);
                             }
@@ -1012,24 +1409,61 @@
                 const getBaseUrlFromRequest = (req) => {
                     if (!req || !req.headers) return null;
                     
+                    // 如果请求对象中有存储原始完整URL，优先使用它
+                    if (req.original_url) {
+                        return req.original_url;
+                    }
+                    
                     // 尝试从头信息中找到 BaseURL
                     const host = req.headers.Host || req.headers.host;
                     if (host) {
-                        if (host.includes('openrouter.ai')) return 'OpenRouter';
-                        if (host.includes('siliconflow.cn')) return '硅基流动';
-                        if (host.includes('deepseek.com')) return 'DeepSeek';
-                        if (host.includes('minimax.chat')) return 'MiniMax';
-                        if (host.includes('bigmodel.cn')) return '智谱';
-                        if (host.includes('dashscope.aliyuncs.com')) return '千问';
-                        if (host.includes('openai.com')) return 'OpenAI';
+                        if (host.includes('openrouter.ai')) return 'https://openrouter.ai/api/v1';
+                        if (host.includes('siliconflow.cn')) return 'https://api.siliconflow.cn/v1';
+                        if (host.includes('deepseek.com')) return 'https://api.deepseek.com/v1';
+                        if (host.includes('minimax.chat')) return 'https://api.minimax.chat/v1';
+                        if (host.includes('bigmodel.cn')) return 'https://open.bigmodel.cn/api/paas/v4';
+                        if (host.includes('dashscope.aliyuncs.com')) return 'https://dashscope.aliyuncs.com/compatible-mode/v1';
+                        if (host.includes('openai.com')) return 'https://api.openai.com/v1';
+                    }
+
+                    // 尝试从Referer或Origin头中获取原始URL信息
+                    const referer = req.headers.Referer || req.headers.referer;
+                    if (referer) {
+                        try {
+                            const refererUrl = new URL(referer);
+                            // 提取域名
+                            const domain = refererUrl.hostname;
+                            if (domain.includes('openrouter.ai')) return 'https://openrouter.ai/api/v1';
+                            if (domain.includes('siliconflow.cn')) return 'https://api.siliconflow.cn/v1';
+                            if (domain.includes('deepseek.com')) return 'https://api.deepseek.com/v1';
+                            if (domain.includes('minimax.chat')) return 'https://api.minimax.chat/v1';
+                            if (domain.includes('bigmodel.cn')) return 'https://open.bigmodel.cn/api/paas/v4';
+                            if (domain.includes('dashscope.aliyuncs.com')) return 'https://dashscope.aliyuncs.com/compatible-mode/v1';
+                            if (domain.includes('openai.com')) return 'https://api.openai.com/v1';
+                        } catch (e) {
+                            console.error('解析Referer URL失败', e);
+                        }
                     }
                     
                     // 查找自定义 baseUrl
                     const origin = req.headers.Origin || req.headers.origin;
                     if (origin) return origin;
                     
-                    // 从当前选择的 BaseURL 推断
-                    return getBaseUrlName(selectedBaseUrl.value);
+                    // 最后检查路径特征来推断URL
+                    if (req.path) {
+                        if (req.path.startsWith('/chat/completions')) {
+                            if (req.api_service === 'OpenRouter') return 'https://openrouter.ai/api/v1';
+                            if (req.api_service === '千问') return 'https://dashscope.aliyuncs.com/compatible-mode/v1';
+                            if (req.api_service === 'OpenAI') return 'https://api.openai.com/v1';
+                            if (req.api_service === '硅基流动') return 'https://api.siliconflow.cn/v1';
+                            if (req.api_service === 'DeepSeek') return 'https://api.deepseek.com/v1';
+                            if (req.api_service === 'MiniMax') return 'https://api.minimax.chat/v1';
+                            if (req.api_service === '智谱') return 'https://open.bigmodel.cn/api/paas/v4';
+                        }
+                    }
+                    
+                    // 如果都无法确定，返回一个默认值或未知
+                    return '未知服务';
                 };
                 
                 // 从请求中获取遮蔽后的 API Key
@@ -1054,6 +1488,22 @@
                 // 从请求中获取模型名称
                 const getModelFromRequest = (req) => {
                     try {
+                        // 如果请求中已经存储了模型信息，直接返回
+                        if (req.model) {
+                            return req.model;
+                        }
+                        
+                        // 优先使用修改后的模型，如果有变更
+                        if (modelChanged(req)) {
+                            return getModifiedModelFromRequest(req);
+                        }
+                        
+                        // 其次尝试获取原始模型
+                        const originalModel = getOriginalModelFromRequest(req);
+                        if (originalModel) {
+                            return originalModel;
+                        }
+                        
                         if (!req || !req.body) return null;
                         
                         // 请求体可能是对象或字符串形式的 JSON
@@ -1094,6 +1544,149 @@
                     showApiKeyInModal.value = !showApiKeyInModal.value;
                 };
                 
+                // 添加请求变更对比相关方法
+                const headersChanged = (req) => {
+                    if (!req || !req.headers || !req.headers.original || !req.headers.modified) {
+                        return false;
+                    }
+                    
+                    // 获取所有头的键
+                    const originalKeys = Object.keys(req.headers.original);
+                    const modifiedKeys = Object.keys(req.headers.modified);
+                    
+                    // 如果键的数量不同，肯定有变化
+                    if (originalKeys.length !== modifiedKeys.length) {
+                        return true;
+                    }
+                    
+                    // 检查每个键的值是否相同
+                    for (const key of originalKeys) {
+                        if (!modifiedKeys.includes(key) || 
+                            req.headers.original[key] !== req.headers.modified[key]) {
+                            return true;
+                        }
+                    }
+                    
+                    // 检查是否有新增的键
+                    for (const key of modifiedKeys) {
+                        if (!originalKeys.includes(key)) {
+                            return true;
+                        }
+                    }
+                    
+                    return false;
+                };
+                
+                const bodyChanged = (req) => {
+                    if (!req || !req.body || !req.body.original || !req.body.modified) {
+                        return false;
+                    }
+                    
+                    // 简单方式：将两者转为JSON字符串后比较
+                    return JSON.stringify(req.body.original) !== JSON.stringify(req.body.modified);
+                };
+                
+                const getAllHeaderKeys = (req) => {
+                    if (!req || !req.headers || !req.headers.original || !req.headers.modified) {
+                        return [];
+                    }
+                    
+                    // 合并原始和修改后的所有键，去重
+                    const keys = [...Object.keys(req.headers.original), ...Object.keys(req.headers.modified)];
+                    return [...new Set(keys)];
+                };
+                
+                const headersColorClass = (req, key) => {
+                    if (!req || !req.headers || !req.headers.original || !req.headers.modified) {
+                        return '';
+                    }
+                    
+                    const hasOriginal = key in req.headers.original;
+                    const hasModified = key in req.headers.modified;
+                    
+                    if (hasOriginal && hasModified) {
+                        // 如果值不同，标记为已更改
+                        if (req.headers.original[key] !== req.headers.modified[key]) {
+                            return 'changed';
+                        }
+                        return ''; // 值相同
+                    } else if (!hasOriginal && hasModified) {
+                        return 'added'; // 新增
+                    } else if (hasOriginal && !hasModified) {
+                        return 'removed'; // 已删除
+                    }
+                    
+                    return '';
+                };
+                
+                // 从请求中获取API服务名称
+                const getApiServiceName = (req) => {
+                    if (!req || !req.headers) return '';
+                    
+                    // 如果已经保存了API服务名称，直接返回
+                    if (req.api_service) {
+                        return req.api_service;
+                    }
+                    
+                    // 根据基础URL确定服务名称
+                    const baseUrl = getBaseUrlFromRequest(req);
+                    if (baseUrl.includes('openrouter.ai')) return 'OpenRouter';
+                    if (baseUrl.includes('siliconflow.cn')) return '硅基流动';
+                    if (baseUrl.includes('deepseek.com')) return 'DeepSeek';
+                    if (baseUrl.includes('minimax.chat')) return 'MiniMax';
+                    if (baseUrl.includes('bigmodel.cn')) return '智谱';
+                    if (baseUrl.includes('dashscope.aliyuncs.com')) return '千问';
+                    if (baseUrl.includes('openai.com')) return 'OpenAI';
+                    
+                    // 默认显示基础URL的域名部分
+                    try {
+                        const url = new URL(baseUrl);
+                        return url.hostname;
+                    } catch (e) {
+                        return baseUrl === '未知服务' ? '未知服务' : baseUrl;
+                    }
+                };
+                
+                // 检查模型是否有变化
+                const modelChanged = (req) => {
+                    if (!req || !req.body || !req.body.original || !req.body.modified) {
+                        return false;
+                    }
+                    
+                    // 获取原始模型和修改后的模型
+                    const originalModel = getOriginalModelFromRequest(req);
+                    const modifiedModel = getModifiedModelFromRequest(req);
+                    
+                    // 如果两者都有值且不相等，说明有变化
+                    return (originalModel && modifiedModel && originalModel !== modifiedModel);
+                };
+                
+                // 获取原始请求中的模型
+                const getOriginalModelFromRequest = (req) => {
+                    try {
+                        if (!req || !req.body || !req.body.original) return null;
+                        
+                        // 从原始请求体中获取模型
+                        return req.body.original.model;
+                    } catch (error) {
+                        console.error('获取原始模型时出错', error);
+                        return null;
+                    }
+                };
+                
+                // 获取修改后请求中的模型
+                const getModifiedModelFromRequest = (req) => {
+                    try {
+                        if (!req || !req.body || !req.body.modified) return null;
+                        
+                        // 从修改后的请求体中获取模型
+                        return req.body.modified.model;
+                    } catch (error) {
+                        console.error('获取修改后模型时出错', error);
+                        return null;
+                    }
+                };
+                
                 return {
                     requests,
                     selectedRequest,
@@ -1114,12 +1707,19 @@
                     renderedReadme,
                     deleteRequest,
                     clearAllRequests,
+                    // 表格显示控制
+                    showOnlyHeaderDiff,
                     // API 设置相关
                     showSettings,
                     selectedBaseUrl,
                     customBaseUrl,
                     apiKey,
                     defaultModel,
+                    // 添加自动替换配置选项
+                    autoReplaceKey,
+                    autoReplaceModel,
+                    keyReplaceMode,
+                    modelReplaceMode,
                     handleBaseUrlChange,
                     saveSettings,
                     savedConfigs,
@@ -1135,7 +1735,17 @@
                     toggleApiKeyVisibility,
                     toggleRequestApiKeyVisibility,
                     showApiKeyInModal,
-                    toggleApiKeyInModalVisibility
+                    toggleApiKeyInModalVisibility,
+                    // 新增检查当前设置函数
+                    checkCurrentSettings,
+                    headersChanged,
+                    bodyChanged,
+                    getAllHeaderKeys,
+                    headersColorClass,
+                    getApiServiceName,
+                    modelChanged,
+                    getOriginalModelFromRequest,
+                    getModifiedModelFromRequest
                 };
             }   
         }).mount('#app');

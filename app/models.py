@@ -9,6 +9,9 @@ class Request(db.Model):
     method = db.Column(db.String)
     headers = db.Column(db.Text)  # 存储为JSON字符串
     body = db.Column(db.Text)  # 存储为JSON字符串
+    api_service = db.Column(db.String)  # 存储API服务名称
+    model = db.Column(db.String)  # 存储模型名称
+    original_url = db.Column(db.String)  # 存储原始完整URL
     responses = db.relationship('Response', backref='request', lazy=True)
     
     def set_headers(self, headers_dict):
