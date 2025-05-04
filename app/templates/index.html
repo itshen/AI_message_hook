@@ -1230,9 +1230,25 @@
                 
                 // 复制到剪贴板
                 const copyToClipboard = (text) => {
-                    navigator.clipboard.writeText(text)
-                        .then(() => alert('已复制到剪贴板'))
-                        .catch(err => console.error('复制失败', err));
+                    try {
+                        // 检查clipboard API是否可用
+                        if (navigator.clipboard && navigator.clipboard.writeText) {
+                            navigator.clipboard.writeText(text)
+                                .then(() => {
+                                    alert('已复制到剪贴板');
+                                })
+                                .catch(err => {
+                                    console.error('使用Clipboard API复制失败', err);
+                                    fallbackCopyTextToClipboard(text);
+                                });
+                        } else {
+                            // 使用备选方法
+                            fallbackCopyTextToClipboard(text);
+                        }
+                    } catch (error) {
+                        console.error('复制失败', error);
+                        alert('复制失败: ' + error.message);
+                    }
                 };
                 
                 // 格式化响应体
@@ -1933,18 +1949,68 @@
                             result.choices[0] = firstChoice;
                         }
                         
-                        // 复制到剪贴板
-                        navigator.clipboard.writeText(JSON.stringify(result, null, 2))
-                            .then(() => {
-                                alert('已合并JSON并复制到剪贴板');
-                            })
-                            .catch(err => {
-                                console.error('复制合并JSON失败', err);
-                                alert('复制失败: ' + err.message);
-                            });
+                        // 获取合并后的JSON字符串
+                        const mergedJsonString = JSON.stringify(result, null, 2);
+                        
+                        // 尝试复制到剪贴板
+                        try {
+                            // 直接使用全局复制函数
+                            copyToClipboard(mergedJsonString);
+                        } catch (error) {
+                            console.error('复制JSON失败', error);
+                            alert('复制失败: ' + error.message);
+                        }
                     } catch (error) {
                         console.error('合并流式JSON失败', error);
                         alert('合并流式JSON失败: ' + error.message);
+                    }
+                };
+                
+                // 备选的复制到剪贴板方法
+                const fallbackCopyTextToClipboard = (text) => {
+                    try {
+                        // 创建临时文本区域
+                        const textArea = document.createElement('textarea');
+                        textArea.value = text;
+                        
+                        // 设置样式使其不可见
+                        textArea.style.position = 'fixed';
+                        textArea.style.top = '0';
+                        textArea.style.left = '0';
+                        textArea.style.width = '2em';
+                        textArea.style.height = '2em';
+                        textArea.style.padding = '0';
+                        textArea.style.border = 'none';
+                        textArea.style.outline = 'none';
+                        textArea.style.boxShadow = 'none';
+                        textArea.style.background = 'transparent';
+                        
+                        document.body.appendChild(textArea);
+                        textArea.focus();
+                        textArea.select();
+                        
+                        // 尝试执行复制命令
+                        const successful = document.execCommand('copy');
+                        if (successful) {
+                            alert('已复制到剪贴板');
+                        } else {
+                            // 显示文本区域供用户手动复制
+                            alert('自动复制失败，请手动复制以下内容');
+                            textArea.style.position = 'static';
+                            textArea.style.width = '100%';
+                            textArea.style.height = '200px';
+                            textArea.style.margin = '10px 0';
+                            textArea.style.padding = '5px';
+                            textArea.style.border = '1px solid #ccc';
+                            textArea.style.borderRadius = '4px';
+                            textArea.style.backgroundColor = '#f5f5f5';
+                        }
+                        
+                        // 清理临时元素
+                        document.body.removeChild(textArea);
+                    } catch (err) {
+                        console.error('Fallback复制失败', err);
+                        alert('复制失败，请手动操作');
                     }
                 };
                 
