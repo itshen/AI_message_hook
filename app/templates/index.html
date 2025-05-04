@@ -163,11 +163,91 @@
         .dark .markdown-content code, .dark .markdown-content pre code {
             background-color: rgba(110, 118, 129, 0.4);
         }
+        
+        /* Toast 通知样式 */
+        .toast-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 9999;
+        }
+        
+        .toast {
+            padding: 12px 20px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+            color: white;
+            font-size: 14px;
+            min-width: 250px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            animation: toast-slide-in 0.3s, toast-fade-out 0.5s 2.5s forwards;
+            opacity: 0.9;
+        }
+        
+        .toast-success {
+            background-color: #10b981;
+        }
+        
+        .toast-error {
+            background-color: #ef4444;
+        }
+        
+        .toast-info {
+            background-color: #3b82f6;
+        }
+        
+        .toast .close-btn {
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            margin-left: 10px;
+            opacity: 0.7;
+            font-size: 16px;
+        }
+        
+        .toast .close-btn:hover {
+            opacity: 1;
+        }
+        
+        @keyframes toast-slide-in {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 0.9;
+            }
+        }
+        
+        @keyframes toast-fade-out {
+            from {
+                opacity: 0.9;
+            }
+            to {
+                opacity: 0;
+            }
+        }
     </style>
 </head>
 <body class="bg-gray-50 dark:bg-gray-900 h-screen overflow-hidden">
     {% raw %}
     <div id="app" v-cloak class="container mx-auto p-4 h-screen flex flex-col">
+        <!-- Toast 通知容器 -->
+        <div class="toast-container">
+            <transition-group name="toast">
+                <div v-for="toast in toasts" :key="toast.id" 
+                     :class="['toast', `toast-${toast.type}`]">
+                    {{ toast.message }}
+                    <button class="close-btn" @click="removeToast(toast.id)">&times;</button>
+                </div>
+            </transition-group>
+        </div>
+
         <header class="bg-white dark:bg-gray-800 shadow rounded-lg p-4 mb-6">
             <div class="flex flex-col gap-4">
                 <div class="flex justify-between items-center">
@@ -846,6 +926,31 @@
                 const readmeError = ref(null);
                 const renderedReadme = ref('');
                 
+                // Toast通知系统
+                const toasts = ref([]);
+                let toastIdCounter = 0;
+                
+                // 显示toast通知
+                const showToast = (message, type = 'success', duration = 3000) => {
+                    const id = toastIdCounter++;
+                    toasts.value.push({ id, message, type });
+                    
+                    // 自动移除
+                    setTimeout(() => {
+                        removeToast(id);
+                    }, duration);
+                    
+                    return id;
+                };
+                
+                // 移除toast通知
+                const removeToast = (id) => {
+                    const index = toasts.value.findIndex(toast => toast.id === id);
+                    if (index !== -1) {
+                        toasts.value.splice(index, 1);
+                    }
+                };
+                
                 // 表格显示控制
                 const showOnlyHeaderDiff = ref(true);
                 
@@ -1235,7 +1340,7 @@
                         if (navigator.clipboard && navigator.clipboard.writeText) {
                             navigator.clipboard.writeText(text)
                                 .then(() => {
-                                    alert('已复制到剪贴板');
+                                    showToast('已复制到剪贴板', 'success');
                                 })
                                 .catch(err => {
                                     console.error('使用Clipboard API复制失败', err);
@@ -1247,7 +1352,7 @@
                         }
                     } catch (error) {
                         console.error('复制失败', error);
-                        alert('复制失败: ' + error.message);
+                        showToast('复制失败: ' + error.message, 'error');
                     }
                 };
                 
@@ -1958,11 +2063,11 @@
                             copyToClipboard(mergedJsonString);
                         } catch (error) {
                             console.error('复制JSON失败', error);
-                            alert('复制失败: ' + error.message);
+                            showToast('复制失败: ' + error.message, 'error');
                         }
                     } catch (error) {
                         console.error('合并流式JSON失败', error);
-                        alert('合并流式JSON失败: ' + error.message);
+                        showToast('合并流式JSON失败: ' + error.message, 'error');
                     }
                 };
                 
@@ -1992,10 +2097,10 @@
                         // 尝试执行复制命令
                         const successful = document.execCommand('copy');
                         if (successful) {
-                            alert('已复制到剪贴板');
+                            showToast('已复制到剪贴板', 'success');
                         } else {
                             // 显示文本区域供用户手动复制
-                            alert('自动复制失败，请手动复制以下内容');
+                            showToast('自动复制失败，请手动复制以下内容', 'error');
                             textArea.style.position = 'static';
                             textArea.style.width = '100%';
                             textArea.style.height = '200px';
@@ -2010,7 +2115,7 @@
                         document.body.removeChild(textArea);
                     } catch (err) {
                         console.error('Fallback复制失败', err);
-                        alert('复制失败，请手动操作');
+                        showToast('复制失败，请手动操作', 'error');
                     }
                 };
                 
@@ -2081,7 +2186,11 @@
                     getOriginalModelFromRequest,
                     getModifiedModelFromRequest,
                     // 添加合并流式JSON功能
-                    mergeStreamJson
+                    mergeStreamJson,
+                    // Toast 系统
+                    toasts,
+                    showToast,
+                    removeToast
                 };
             }   
         }).mount('#app');
