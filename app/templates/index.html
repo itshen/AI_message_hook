@@ -310,12 +310,36 @@
                     
                     <div class="mb-4">
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">默认模型名称</label>
-                        <input 
-                            type="text" 
-                            v-model="defaultModel" 
-                            placeholder="请输入默认模型名称" 
-                            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                        />
+                        <div class="flex items-center space-x-2">
+                            <div class="relative w-full">
+                                <input 
+                                    type="text" 
+                                    v-model="defaultModel" 
+                                    placeholder="请输入默认模型名称" 
+                                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                                    list="model-list"
+                                />
+                                <datalist id="model-list">
+                                    <option v-for="model in filteredModels" :key="model.id" :value="model.id">
+                                        {{ model.name || model.id }} - {{ model.description ? (model.description.substring(0, 50) + (model.description.length > 50 ? '...' : '')) : '无描述' }}
+                                    </option>
+                                </datalist>
+                            </div>
+                            <button 
+                                @click="fetchModelsList" 
+                                class="px-3 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg shadow flex items-center">
+                                <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                                </svg>
+                                <span>查询模型</span>
+                            </button>
+                        </div>
+                        <div v-if="modelsLoading" class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                            正在加载模型列表...
+                        </div>
+                        <div v-if="modelsError" class="text-sm text-red-500 mt-1">
+                            {{ modelsError }}
+                        </div>
                     </div>
                     
                     <!-- 添加自动替换选项 -->
@@ -778,8 +802,17 @@
                                         </svg>
                                         响应体
                                     </h4>
-                                    <button @click="copyToClipboard(response.body)" 
-                                            class="text-xs bg-blue-50 hover:bg-blue-100 dark:bg-blue-900 dark:hover:bg-blue-800 text-blue-600 dark:text-blue-400 px-2 py-1 rounded">复制</button>
+                                    <div class="flex space-x-2">
+                                        <button v-if="response.is_stream" 
+                                                @click="mergeStreamJson(response.body)" 
+                                                class="text-xs bg-green-50 hover:bg-green-100 dark:bg-green-900 dark:hover:bg-green-800 text-green-600 dark:text-green-400 px-2 py-1 rounded">
+                                            合并流式JSON
+                                        </button>
+                                        <button @click="copyToClipboard(response.body)" 
+                                                class="text-xs bg-blue-50 hover:bg-blue-100 dark:bg-blue-900 dark:hover:bg-blue-800 text-blue-600 dark:text-blue-400 px-2 py-1 rounded">
+                                            复制
+                                        </button>
+                                    </div>
                                 </div>
                                 <div class="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg border border-gray-200 dark:border-gray-600 json-viewer max-h-96 overflow-y-auto custom-scrollbar">
                                     {{ formatResponseBody(response.body) }}
@@ -798,7 +831,7 @@
     {% endraw %}
 
     <script>
-        const { createApp, ref, onMounted, watch, nextTick } = Vue;
+        const { createApp, ref, onMounted, watch, nextTick, computed } = Vue;
         
         createApp({
             setup() {
@@ -824,6 +857,24 @@
                 const defaultModel = ref('');
                 const showApiKey = ref(false);
                 const showApiKeyInModal = ref(false);
+                
+                // 模型列表相关
+                const availableModels = ref([]);
+                const modelsLoading = ref(false);
+                const modelsError = ref(null);
+                
+                // 过滤模型列表
+                const filteredModels = computed(() => {
+                    if (!defaultModel.value || defaultModel.value.trim() === '') {
+                        return availableModels.value;
+                    }
+                    const searchTerm = defaultModel.value.toLowerCase();
+                    return availableModels.value.filter(model => 
+                        (model.id && model.id.toLowerCase().includes(searchTerm)) || 
+                        (model.name && model.name.toLowerCase().includes(searchTerm)) ||
+                        (model.description && model.description.toLowerCase().includes(searchTerm))
+                    );
+                });
                 
                 // 添加自动替换配置选项
                 const autoReplaceKey = ref(true);
@@ -1306,6 +1357,9 @@
                     // 加载所有已保存的配置，用于主界面展示
                     loadSavedConfigs();
                     
+                    // 尝试从缓存加载模型列表
+                    loadModelsFromCache();
+                    
                     // 每10秒自动刷新请求列表，无论是否有选中请求
                     setInterval(() => {
                         // 保存当前选中的请求ID
@@ -1687,6 +1741,213 @@
                     }
                 };
                 
+                // 获取模型列表
+                const fetchModelsList = async () => {
+                    modelsLoading.value = true;
+                    modelsError.value = null;
+                    
+                    try {
+                        const response = await axios.get('/api/models');
+                        if (response.data.success) {
+                            // 处理返回的数据结构
+                            availableModels.value = response.data.data || [];
+                            
+                            // 存储到本地缓存
+                            localStorage.setItem('aiHook_models_cache', JSON.stringify({
+                                timestamp: Date.now(),
+                                models: availableModels.value
+                            }));
+                            
+                            // 如果成功获取到模型列表，显示提示
+                            console.log(`成功获取到 ${availableModels.value.length} 个模型`);
+                        } else {
+                            modelsError.value = response.data.error || '获取模型列表失败';
+                        }
+                    } catch (error) {
+                        console.error('获取模型列表出错:', error);
+                        modelsError.value = error.response?.data?.error || error.message || '获取模型列表时发生错误';
+                    } finally {
+                        modelsLoading.value = false;
+                    }
+                };
+                
+                // 从缓存加载模型列表
+                const loadModelsFromCache = () => {
+                    const cachedData = localStorage.getItem('aiHook_models_cache');
+                    if (cachedData) {
+                        try {
+                            const parsed = JSON.parse(cachedData);
+                            // 检查缓存是否在24小时内
+                            const isRecent = Date.now() - parsed.timestamp < 24 * 60 * 60 * 1000;
+                            if (isRecent && Array.isArray(parsed.models) && parsed.models.length > 0) {
+                                availableModels.value = parsed.models;
+                                return true;
+                            }
+                        } catch (e) {
+                            console.error('解析模型缓存失败', e);
+                        }
+                    }
+                    return false;
+                };
+                
+                // 监听设置模态框的显示状态
+                watch(showSettings, (visible) => {
+                    if (visible) {
+                        // 如果缓存中没有模型列表或超过24小时，自动获取
+                        const hasModels = loadModelsFromCache();
+                        if (!hasModels && apiKey.value && apiKey.value.trim() !== '') {
+                            // 如果没有模型但有API Key，自动获取模型列表
+                            fetchModelsList();
+                        }
+                    }
+                });
+                
+                // 监听apiKey变化，当API Key变更时清空模型缓存
+                watch(apiKey, (newValue, oldValue) => {
+                    if (newValue !== oldValue && showSettings.value) {
+                        // 当API Key变化且设置模态框打开时，清空模型列表和错误
+                        availableModels.value = [];
+                        modelsError.value = null;
+                        // 如果有新的API Key，尝试获取模型列表
+                        if (newValue && newValue.trim() !== '') {
+                            fetchModelsList();
+                        }
+                    }
+                });
+                
+                // 合并流式返回的JSON
+                const mergeStreamJson = (streamResponse) => {
+                    try {
+                        // 按行分割响应
+                        const lines = streamResponse.split('\n');
+                        let mergedContent = '';
+                        let jsonObjects = [];
+                        
+                        // 提取所有JSON对象
+                        for (const line of lines) {
+                            const trimmedLine = line.trim();
+                            // 检查行是否以"data: "开头，并且不是[DONE]
+                            if (trimmedLine.startsWith('data:') && !trimmedLine.includes('[DONE]')) {
+                                try {
+                                    // 提取JSON部分
+                                    const jsonString = trimmedLine.substring(5).trim();
+                                    if (jsonString && jsonString !== '') {
+                                        const jsonObj = JSON.parse(jsonString);
+                                        jsonObjects.push(jsonObj);
+                                        
+                                        // 提取内容部分 - 假设是OpenAI格式的流式响应
+                                        if (jsonObj.choices && jsonObj.choices.length > 0 && 
+                                            jsonObj.choices[0].delta && jsonObj.choices[0].delta.content) {
+                                            mergedContent += jsonObj.choices[0].delta.content;
+                                        }
+                                    }
+                                } catch (e) {
+                                    // 忽略无法解析的行
+                                    console.warn('无法解析JSON行:', trimmedLine, e);
+                                }
+                            }
+                        }
+                        
+                        // 如果没有解析到任何对象，返回
+                        if (jsonObjects.length === 0) {
+                            alert('没有找到有效的JSON对象');
+                            return;
+                        }
+                        
+                        // 寻找完整的最终响应对象(有finish_reason的对象)
+                        let finalResponseObject = null;
+                        for (let i = jsonObjects.length - 1; i >= 0; i--) {
+                            const obj = jsonObjects[i];
+                            if (obj.choices && obj.choices.length > 0 && 
+                                (obj.choices[0].finish_reason === 'stop' || 
+                                 obj.choices[0].finish_reason === 'length' ||
+                                 obj.choices[0].native_finish_reason === 'stop' ||
+                                 obj.choices[0].native_finish_reason === 'length')) {
+                                finalResponseObject = obj;
+                                break;
+                            }
+                        }
+                        
+                        // 如果找不到完整响应对象，则使用最后一个对象
+                        if (!finalResponseObject && jsonObjects.length > 0) {
+                            finalResponseObject = jsonObjects[jsonObjects.length - 1];
+                        }
+                        
+                        // 查找带有完整usage信息的对象(通常是最后一个)
+                        let usageObject = null;
+                        for (let i = jsonObjects.length - 1; i >= 0; i--) {
+                            const obj = jsonObjects[i];
+                            if (obj.usage && 
+                                typeof obj.usage === 'object' && 
+                                'prompt_tokens' in obj.usage && 
+                                'completion_tokens' in obj.usage && 
+                                'total_tokens' in obj.usage) {
+                                usageObject = obj;
+                                break;
+                            }
+                        }
+                        
+                        // 构建基础结果对象
+                        let result = { ...finalResponseObject };
+                        
+                        // 如果找到了usage对象，使用它的usage
+                        if (usageObject && usageObject.usage) {
+                            result.usage = { ...usageObject.usage };
+                        }
+                        
+                        // 处理choices，确保内容被正确合并
+                        if (result.choices && result.choices.length > 0) {
+                            // 复制choices数组
+                            result.choices = [...result.choices];
+                            
+                            // 更新第一个choice对象的内容
+                            const firstChoice = { ...result.choices[0] };
+                            
+                            // 如果有delta对象
+                            if (firstChoice.delta) {
+                                firstChoice.delta = {
+                                    ...firstChoice.delta,
+                                    content: mergedContent  // 使用我们合并的内容
+                                };
+                            } 
+                            // 如果有message对象
+                            else if (firstChoice.message) {
+                                firstChoice.message = {
+                                    ...firstChoice.message,
+                                    content: mergedContent  // 使用我们合并的内容
+                                };
+                            }
+                            // 如果没有delta或message，但原始对象中有content
+                            else if ('content' in firstChoice) {
+                                firstChoice.content = mergedContent;
+                            }
+                            // 否则添加delta对象
+                            else {
+                                firstChoice.delta = {
+                                    role: 'assistant',
+                                    content: mergedContent
+                                };
+                            }
+                            
+                            // 更新choices数组中的第一个元素
+                            result.choices[0] = firstChoice;
+                        }
+                        
+                        // 复制到剪贴板
+                        navigator.clipboard.writeText(JSON.stringify(result, null, 2))
+                            .then(() => {
+                                alert('已合并JSON并复制到剪贴板');
+                            })
+                            .catch(err => {
+                                console.error('复制合并JSON失败', err);
+                                alert('复制失败: ' + err.message);
+                            });
+                    } catch (error) {
+                        console.error('合并流式JSON失败', error);
+                        alert('合并流式JSON失败: ' + error.message);
+                    }
+                };
+                
                 return {
                     requests,
                     selectedRequest,
@@ -1715,6 +1976,13 @@
                     customBaseUrl,
                     apiKey,
                     defaultModel,
+                    // 模型列表相关
+                    availableModels,
+                    modelsLoading,
+                    modelsError,
+                    filteredModels,
+                    fetchModelsList,
+                    loadModelsFromCache,
                     // 添加自动替换配置选项
                     autoReplaceKey,
                     autoReplaceModel,
@@ -1745,7 +2013,9 @@
                     getApiServiceName,
                     modelChanged,
                     getOriginalModelFromRequest,
-                    getModifiedModelFromRequest
+                    getModifiedModelFromRequest,
+                    // 添加合并流式JSON功能
+                    mergeStreamJson
                 };
             }   
         }).mount('#app');

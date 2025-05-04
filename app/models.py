@@ -39,4 +39,10 @@ class Response(db.Model):
         self.headers = json.dumps(dict(headers_dict))
         
     def get_headers(self):
-        return json.loads(self.headers) if self.headers else {} 
+        return json.loads(self.headers) if self.headers else {}
+
+class AdminUser(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(64), unique=True, nullable=False)
+    password_hash = db.Column(db.String(128), nullable=False)
+    force_change = db.Column(db.Boolean, default=True)  # 首次登录后强制改密 

@@ -1,0 +1,9 @@
+{
+  "base_url": "https://openrouter.ai/api/v1",
+  "api_key": "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",
+  "default_model": "anthropic/claude-3.7-sonnet",
+  "auto_replace_key": true,
+  "auto_replace_model": true,
+  "key_replace_mode": "force",
+  "model_replace_mode": "force"
+}
